@@ -54,6 +54,14 @@ export const Navigation = () => {
               )}
             </Button>
             <Button
+              variant="default"
+              size="sm"
+              onClick={() => navigate("/auth")}
+              className="hidden md:flex"
+            >
+              Admin Login
+            </Button>
+            <Button
               variant="ghost"
               size="icon"
               className="md:hidden"
@@ -79,6 +87,14 @@ export const Navigation = () => {
               {category.name}
             </Link>
           ))}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => navigate("/auth")}
+            className="md:hidden mt-2"
+          >
+            Admin Login
+          </Button>
         </div>
       </div>
     </nav>
