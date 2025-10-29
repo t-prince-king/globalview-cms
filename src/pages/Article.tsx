@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Share2, Facebook, Twitter } from "lucide-react";
+import { Helmet } from "react-helmet";
 
 interface ArticleData {
   id: string;
@@ -93,6 +94,22 @@ export const Article = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{article.title} - GlobalView News</title>
+        <meta name="description" content={article.description} />
+        <meta name="keywords" content={article.tags.join(", ")} />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={article.description} />
+        <meta property="og:image" content={article.image_url || ""} />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={window.location.href} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={article.description} />
+        <meta name="twitter:image" content={article.image_url || ""} />
+        <meta name="author" content={article.author} />
+        <link rel="canonical" href={window.location.href} />
+      </Helmet>
       <Navigation />
 
       <article className="container mx-auto px-4 py-8 max-w-4xl">

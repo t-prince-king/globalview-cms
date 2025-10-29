@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { LogOut, Plus, Edit, Trash2 } from "lucide-react";
+import { LogOut, Plus, Edit, Trash2, Home, Upload, X } from "lucide-react";
 
 interface Article {
   id: string;
@@ -26,6 +26,10 @@ export const Admin = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
   
   const [formData, setFormData] = useState({
     title: "",
@@ -117,8 +121,77 @@ export const Admin = () => {
       .trim();
   };
 
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleImageFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleImageFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return formData.image_url || null;
+
+    setUploading(true);
+    try {
+      const fileExt = imageFile.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("article-images")
+        .upload(filePath, imageFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("article-images")
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error: any) {
+      toast.error("Error uploading image: " + error.message);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Upload image first if there's a new one
+    const imageUrl = await uploadImage();
+    if (imageFile && !imageUrl) {
+      toast.error("Failed to upload image");
+      return;
+    }
 
     const slug = formData.slug || generateSlug(formData.title);
     const tagsArray = formData.tags
@@ -130,6 +203,7 @@ export const Admin = () => {
       ...formData,
       slug,
       tags: tagsArray,
+      image_url: imageUrl || formData.image_url,
     };
 
     try {
@@ -172,6 +246,8 @@ export const Admin = () => {
       is_breaking: article.is_breaking,
       is_editors_pick: article.is_editors_pick,
     });
+    setImagePreview(article.image_url || "");
+    setImageFile(null);
     setShowForm(true);
   };
 
@@ -205,6 +281,8 @@ export const Admin = () => {
     });
     setEditingId(null);
     setShowForm(false);
+    setImageFile(null);
+    setImagePreview("");
   };
 
   if (loading) {
@@ -220,13 +298,17 @@ export const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <header className="border-b border-slate-800 bg-slate-900">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">{user?.email}</span>
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/")} className="border-slate-700 hover:bg-slate-800">
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </Button>
+            <span className="text-sm text-slate-400">{user?.email}</span>
+            <Button variant="outline" size="sm" onClick={handleSignOut} className="border-slate-700 hover:bg-slate-800">
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
@@ -244,9 +326,9 @@ export const Admin = () => {
         </div>
 
         {showForm && (
-          <Card className="mb-8">
+          <Card className="mb-8 bg-slate-900 border-slate-800">
             <CardHeader>
-              <CardTitle>{editingId ? "Edit Article" : "Create New Article"}</CardTitle>
+              <CardTitle className="text-slate-100">{editingId ? "Edit Article" : "Create New Article"}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -255,22 +337,24 @@ export const Admin = () => {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
+                  className="bg-slate-800 border-slate-700 text-slate-100"
                 />
 
                 <Input
                   placeholder="Slug (auto-generated if empty)"
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  className="bg-slate-800 border-slate-700 text-slate-100"
                 />
 
                 <Select
                   value={formData.category}
                   onValueChange={(value) => setFormData({ ...formData, category: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-slate-800 border-slate-700 text-slate-100">
                     <SelectItem value="world">World</SelectItem>
                     <SelectItem value="politics">Politics</SelectItem>
                     <SelectItem value="technology">Technology</SelectItem>
@@ -287,6 +371,7 @@ export const Admin = () => {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
                   required
+                  className="bg-slate-800 border-slate-700 text-slate-100"
                 />
 
                 <Textarea
@@ -295,24 +380,76 @@ export const Admin = () => {
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   rows={10}
                   required
+                  className="bg-slate-800 border-slate-700 text-slate-100"
                 />
 
-                <Input
-                  placeholder="Image URL"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                />
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-slate-300">Article Image</label>
+                  <div
+                    className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                      dragActive
+                        ? "border-primary bg-slate-800"
+                        : "border-slate-700 bg-slate-800/50"
+                    }`}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                  >
+                    {imagePreview ? (
+                      <div className="relative">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="max-h-48 mx-auto rounded"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview("");
+                            setFormData({ ...formData, image_url: "" });
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload className="h-12 w-12 mx-auto mb-4 text-slate-400" />
+                        <p className="text-slate-400 mb-2">
+                          Drag and drop an image here, or click to select
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleImageFile(e.target.files[0]);
+                            }
+                          }}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
 
                 <Input
                   placeholder="Author"
                   value={formData.author}
                   onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                  className="bg-slate-800 border-slate-700 text-slate-100"
                 />
 
                 <Input
                   placeholder="Tags (comma-separated)"
                   value={formData.tags}
                   onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  className="bg-slate-800 border-slate-700 text-slate-100"
                 />
 
                 <div className="flex gap-6">
@@ -324,7 +461,7 @@ export const Admin = () => {
                         setFormData({ ...formData, is_featured: checked as boolean })
                       }
                     />
-                    <label htmlFor="featured" className="text-sm">
+                    <label htmlFor="featured" className="text-sm text-slate-300">
                       Featured
                     </label>
                   </div>
@@ -337,7 +474,7 @@ export const Admin = () => {
                         setFormData({ ...formData, is_breaking: checked as boolean })
                       }
                     />
-                    <label htmlFor="breaking" className="text-sm">
+                    <label htmlFor="breaking" className="text-sm text-slate-300">
                       Breaking News
                     </label>
                   </div>
@@ -350,18 +487,18 @@ export const Admin = () => {
                         setFormData({ ...formData, is_editors_pick: checked as boolean })
                       }
                     />
-                    <label htmlFor="editors" className="text-sm">
+                    <label htmlFor="editors" className="text-sm text-slate-300">
                       Editor's Pick
                     </label>
                   </div>
                 </div>
 
                 <div className="flex gap-2">
-                  <Button type="submit">
-                    {editingId ? "Update Article" : "Publish Article"}
+                  <Button type="submit" disabled={uploading}>
+                    {uploading ? "Uploading..." : editingId ? "Update Article" : "Publish Article"}
                   </Button>
                   {editingId && (
-                    <Button type="button" variant="outline" onClick={resetForm}>
+                    <Button type="button" variant="outline" onClick={resetForm} className="border-slate-700 hover:bg-slate-800">
                       Cancel Edit
                     </Button>
                   )}
@@ -373,12 +510,12 @@ export const Admin = () => {
 
         <div className="space-y-4">
           {articles.map((article) => (
-            <Card key={article.id}>
+            <Card key={article.id} className="bg-slate-900 border-slate-800">
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex-1">
-                  <h3 className="font-semibold">{article.title}</h3>
+                  <h3 className="font-semibold text-slate-100">{article.title}</h3>
                   <div className="flex gap-2 mt-1">
-                    <span className="text-xs bg-muted px-2 py-1 rounded">{article.category}</span>
+                    <span className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded">{article.category}</span>
                     {article.is_featured && (
                       <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">
                         Featured
@@ -392,13 +529,14 @@ export const Admin = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(article)}>
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(article)} className="border-slate-700 hover:bg-slate-800">
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleDelete(article.id)}
+                    className="border-slate-700 hover:bg-slate-800"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
