@@ -17,6 +17,8 @@ interface ArticleData {
   description: string;
   content: string;
   image_url: string | null;
+  images: string[];
+  videos: string[];
   category: string;
   author: string;
   published_at: string;
@@ -35,11 +37,15 @@ export const Article = () => {
       if (!slug) return;
 
       setLoading(true);
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("articles")
         .select("*")
         .eq("slug", slug)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching article:", error);
+      }
 
       if (data) {
         setArticle(data);
@@ -100,13 +106,13 @@ export const Article = () => {
         <meta name="keywords" content={article.tags.join(", ")} />
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={article.description} />
-        <meta property="og:image" content={article.image_url || ""} />
+        <meta property="og:image" content={article.images?.[0] || article.image_url || ""} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={article.description} />
-        <meta name="twitter:image" content={article.image_url || ""} />
+        <meta name="twitter:image" content={article.images?.[0] || article.image_url || ""} />
         <meta name="author" content={article.author} />
         <link rel="canonical" href={window.location.href} />
       </Helmet>
@@ -125,12 +131,36 @@ export const Article = () => {
           <span>{format(new Date(article.published_at), "MMMM d, yyyy")}</span>
         </div>
 
-        {article.image_url && (
-          <img
-            src={article.image_url}
-            alt={article.title}
-            className="w-full h-96 object-cover rounded-lg mb-8"
-          />
+        {/* Display all images */}
+        {article.images && article.images.length > 0 && (
+          <div className="space-y-6 mb-8">
+            {article.images.map((imageUrl, index) => (
+              <div key={index} className="rounded-lg overflow-hidden shadow-lg">
+                <img
+                  src={imageUrl}
+                  alt={`${article.title} - Image ${index + 1}`}
+                  className="w-full max-h-[600px] object-contain bg-muted"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Display all videos */}
+        {article.videos && article.videos.length > 0 && (
+          <div className="space-y-6 mb-8">
+            {article.videos.map((videoUrl, index) => (
+              <div key={index} className="rounded-lg overflow-hidden shadow-lg">
+                <video
+                  src={videoUrl}
+                  controls
+                  className="w-full max-h-[600px] bg-muted"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            ))}
+          </div>
         )}
 
         <div className="flex gap-2 mb-8">
@@ -194,7 +224,7 @@ export const Article = () => {
                 <ArticleCard
                   key={related.id}
                   {...related}
-                  imageUrl={related.image_url || undefined}
+                  imageUrl={related.images?.[0] || related.image_url || undefined}
                 />
               ))}
             </div>

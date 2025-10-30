@@ -23,6 +23,7 @@ export type Database = {
           description: string
           id: string
           image_url: string | null
+          images: string[] | null
           is_breaking: boolean | null
           is_editors_pick: boolean | null
           is_featured: boolean | null
@@ -31,6 +32,7 @@ export type Database = {
           tags: string[] | null
           title: string
           updated_at: string | null
+          videos: string[] | null
           views: number | null
         }
         Insert: {
@@ -41,6 +43,7 @@ export type Database = {
           description: string
           id?: string
           image_url?: string | null
+          images?: string[] | null
           is_breaking?: boolean | null
           is_editors_pick?: boolean | null
           is_featured?: boolean | null
@@ -49,6 +52,7 @@ export type Database = {
           tags?: string[] | null
           title: string
           updated_at?: string | null
+          videos?: string[] | null
           views?: number | null
         }
         Update: {
@@ -59,6 +63,7 @@ export type Database = {
           description?: string
           id?: string
           image_url?: string | null
+          images?: string[] | null
           is_breaking?: boolean | null
           is_editors_pick?: boolean | null
           is_featured?: boolean | null
@@ -67,6 +72,7 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string | null
+          videos?: string[] | null
           views?: number | null
         }
         Relationships: []
