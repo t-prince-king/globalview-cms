@@ -120,10 +120,10 @@ export const Admin = () => {
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
-      .replace(/[^\w\s-]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
-      .trim();
+      .replace(/^-+|-+$/g, "");
   };
 
   const handleImagesDrag = (e: React.DragEvent) => {
