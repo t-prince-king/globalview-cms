@@ -10,12 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Share2, Facebook, Twitter } from "lucide-react";
 import { Helmet } from "react-helmet";
 
+type ContentBlock = 
+  | { type: "text"; content: string }
+  | { type: "image"; urls: string[]; layout: "single" | "grid" | "row" }
+  | { type: "video"; urls: string[] };
+
 interface ArticleData {
   id: string;
   title: string;
   slug: string;
   description: string;
   content: string;
+  content_blocks?: ContentBlock[];
   image_url: string | null;
   images: string[];
   videos: string[];
@@ -48,7 +54,10 @@ export const Article = () => {
       }
 
       if (data) {
-        setArticle(data);
+        setArticle({
+          ...data,
+          content_blocks: data.content_blocks as ContentBlock[] | undefined
+        });
 
         // Increment view count
         await supabase
@@ -131,36 +140,100 @@ export const Article = () => {
           <span>{format(new Date(article.published_at), "MMMM d, yyyy")}</span>
         </div>
 
-        {/* Display all images */}
-        {article.images && article.images.length > 0 && (
-          <div className="space-y-6 mb-8">
-            {article.images.map((imageUrl, index) => (
-              <div key={index} className="rounded-lg overflow-hidden shadow-lg">
-                <img
-                  src={imageUrl}
-                  alt={`${article.title} - Image ${index + 1}`}
-                  className="w-full max-h-[600px] object-contain bg-muted"
-                />
+        {/* Display content blocks if available */}
+        {article.content_blocks && article.content_blocks.length > 0 ? (
+          <div className="space-y-8 mb-12">
+            {article.content_blocks.map((block, index) => (
+              <div key={index}>
+                {block.type === "text" && (
+                  <div className="prose prose-lg max-w-none">
+                    {block.content.split("\n\n").map((paragraph, pIndex) => (
+                      <p key={pIndex} className="mb-4 leading-relaxed">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                
+                {block.type === "image" && block.urls.length > 0 && (
+                  <div className={`${
+                    block.layout === "grid" 
+                      ? "grid grid-cols-2 gap-4" 
+                      : block.layout === "row"
+                      ? "grid grid-cols-3 gap-4"
+                      : "space-y-6"
+                  }`}>
+                    {block.urls.map((url, imgIndex) => (
+                      <div key={imgIndex} className="rounded-lg overflow-hidden shadow-lg">
+                        <img
+                          src={url}
+                          alt={`${article.title} - Image ${imgIndex + 1}`}
+                          className={`w-full ${block.layout === "single" ? "max-h-[600px] object-contain" : "h-64 object-cover"} bg-muted`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {block.type === "video" && block.urls.length > 0 && (
+                  <div className="space-y-6">
+                    {block.urls.map((url, vidIndex) => (
+                      <div key={vidIndex} className="rounded-lg overflow-hidden shadow-lg">
+                        <video
+                          src={url}
+                          controls
+                          className="w-full max-h-[600px] bg-muted"
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
-        )}
+        ) : (
+          <>
+            {/* Fallback to old format */}
+            {article.images && article.images.length > 0 && (
+              <div className="space-y-6 mb-8">
+                {article.images.map((imageUrl, index) => (
+                  <div key={index} className="rounded-lg overflow-hidden shadow-lg">
+                    <img
+                      src={imageUrl}
+                      alt={`${article.title} - Image ${index + 1}`}
+                      className="w-full max-h-[600px] object-contain bg-muted"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
 
-        {/* Display all videos */}
-        {article.videos && article.videos.length > 0 && (
-          <div className="space-y-6 mb-8">
-            {article.videos.map((videoUrl, index) => (
-              <div key={index} className="rounded-lg overflow-hidden shadow-lg">
-                <video
-                  src={videoUrl}
-                  controls
-                  className="w-full max-h-[600px] bg-muted"
-                >
-                  Your browser does not support the video tag.
-                </video>
+            {article.videos && article.videos.length > 0 && (
+              <div className="space-y-6 mb-8">
+                {article.videos.map((videoUrl, index) => (
+                  <div key={index} className="rounded-lg overflow-hidden shadow-lg">
+                    <video
+                      src={videoUrl}
+                      controls
+                      className="w-full max-h-[600px] bg-muted"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+            
+            <div className="prose prose-lg max-w-none mb-12">
+              {article.content.split("\n\n").map((paragraph, index) => (
+                <p key={index} className="mb-4 leading-relaxed">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </>
         )}
 
         <div className="flex gap-2 mb-8">
@@ -194,14 +267,6 @@ export const Article = () => {
             <Twitter className="h-4 w-4 mr-2" />
             Twitter
           </Button>
-        </div>
-
-        <div className="prose prose-lg max-w-none mb-12">
-          {article.content.split("\n\n").map((paragraph, index) => (
-            <p key={index} className="mb-4 leading-relaxed">
-              {paragraph}
-            </p>
-          ))}
         </div>
 
         {article.tags && article.tags.length > 0 && (

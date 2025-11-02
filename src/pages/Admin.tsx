@@ -9,7 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LogOut, Plus, Edit, Trash2, Home, Upload, X, Image, Video } from "lucide-react";
+import { LogOut, Plus, Edit, Trash2, Home, Upload, X, Image, Video, Type, MoveUp, MoveDown, Grid, Columns } from "lucide-react";
+
+type ContentBlock = 
+  | { type: "text"; content: string }
+  | { type: "image"; urls: string[]; layout: "single" | "grid" | "row" }
+  | { type: "video"; urls: string[] };
 
 interface Article {
   id: string;
@@ -34,6 +39,9 @@ export const Admin = () => {
   const [videoFiles, setVideoFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
+  const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([
+    { type: "text", content: "" }
+  ]);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -275,6 +283,7 @@ export const Admin = () => {
         images,
         videos,
         image_url: images[0] || null, // Keep for backward compatibility
+        content_blocks: contentBlocks,
       };
 
       if (editingId) {
@@ -325,6 +334,14 @@ export const Admin = () => {
         is_breaking: data.is_breaking,
         is_editors_pick: data.is_editors_pick,
       });
+      
+      // Load content blocks if available, otherwise create default text block
+      if (data.content_blocks && Array.isArray(data.content_blocks) && data.content_blocks.length > 0) {
+        setContentBlocks(data.content_blocks as ContentBlock[]);
+      } else {
+        setContentBlocks([{ type: "text", content: data.content || "" }]);
+      }
+      
       setImageFiles([]);
       setVideoFiles([]);
       setImagePreviews([]);
@@ -362,6 +379,7 @@ export const Admin = () => {
       is_breaking: false,
       is_editors_pick: false,
     });
+    setContentBlocks([{ type: "text", content: "" }]);
     setEditingId(null);
     setShowForm(false);
     setImageFiles([]);
@@ -369,6 +387,56 @@ export const Admin = () => {
     setImagePreviews([]);
     videoPreviews.forEach(url => URL.revokeObjectURL(url));
     setVideoPreviews([]);
+  };
+
+  const addBlock = (type: "text" | "image" | "video") => {
+    if (type === "text") {
+      setContentBlocks([...contentBlocks, { type: "text", content: "" }]);
+    } else if (type === "image") {
+      setContentBlocks([...contentBlocks, { type: "image", urls: [], layout: "single" }]);
+    } else {
+      setContentBlocks([...contentBlocks, { type: "video", urls: [] }]);
+    }
+  };
+
+  const removeBlock = (index: number) => {
+    if (contentBlocks.length === 1) {
+      toast.error("You must have at least one content block");
+      return;
+    }
+    setContentBlocks(contentBlocks.filter((_, i) => i !== index));
+  };
+
+  const moveBlock = (index: number, direction: "up" | "down") => {
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === contentBlocks.length - 1) return;
+    
+    const newBlocks = [...contentBlocks];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    [newBlocks[index], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[index]];
+    setContentBlocks(newBlocks);
+  };
+
+  const updateBlock = (index: number, updates: Partial<ContentBlock>) => {
+    const newBlocks = [...contentBlocks];
+    newBlocks[index] = { ...newBlocks[index], ...updates } as ContentBlock;
+    setContentBlocks(newBlocks);
+  };
+
+  const addMediaToBlock = (blockIndex: number, urls: string[]) => {
+    const block = contentBlocks[blockIndex];
+    if (block.type === "image" || block.type === "video") {
+      updateBlock(blockIndex, { urls: [...block.urls, ...urls] });
+    }
+  };
+
+  const removeMediaFromBlock = (blockIndex: number, urlIndex: number) => {
+    const block = contentBlocks[blockIndex];
+    if (block.type === "image" || block.type === "video") {
+      updateBlock(blockIndex, { 
+        urls: block.urls.filter((_, i) => i !== urlIndex) 
+      });
+    }
   };
 
   if (loading) {
@@ -475,205 +543,201 @@ export const Admin = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="content" className="text-slate-300">Content</Label>
-                  <Textarea
-                    id="content"
-                    placeholder="Full Article Content"
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    rows={10}
-                    required
-                    className="bg-slate-800 border-slate-700 text-slate-100"
-                  />
-                </div>
-
-                {/* Images Upload */}
-                <div className="space-y-2">
-                  <Label className="text-slate-300 flex items-center gap-2">
-                    <Image className="h-4 w-4" />
-                    Article Images
-                  </Label>
-                  <div
-                    className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                      dragActiveImages
-                        ? "border-primary bg-slate-800"
-                        : "border-slate-700 bg-slate-800/50"
-                    }`}
-                    onDragEnter={handleImagesDrag}
-                    onDragLeave={handleImagesDrag}
-                    onDragOver={handleImagesDrag}
-                    onDrop={handleImagesDrop}
-                  >
-                    <Upload className="h-12 w-12 mx-auto mb-4 text-slate-400" />
-                    <p className="text-slate-400 mb-2">
-                      Drag and drop multiple images here, or click to select
-                    </p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => {
-                        if (e.target.files) {
-                          handleImageFiles(Array.from(e.target.files));
-                        }
-                      }}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                  </div>
-                  
-                  {/* Show existing images from edit */}
-                  {formData.images.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-sm text-slate-400 mb-2">Existing images:</p>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {formData.images.map((url, index) => (
-                          <div key={`existing-${index}`} className="relative group">
-                            <img
-                              src={url}
-                              alt={`Existing ${index + 1}`}
-                              className="w-full h-32 object-cover rounded-lg"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => {
-                                setFormData({
-                                  ...formData,
-                                  images: formData.images.filter((_, i) => i !== index)
-                                });
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
+                {/* Content Blocks */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-slate-300">Article Content Blocks</Label>
+                    <div className="flex gap-2">
+                      <Button type="button" size="sm" onClick={() => addBlock("text")} variant="outline" className="border-slate-700 hover:bg-slate-800">
+                        <Type className="h-4 w-4 mr-2" />
+                        Add Text
+                      </Button>
+                      <Button type="button" size="sm" onClick={() => addBlock("image")} variant="outline" className="border-slate-700 hover:bg-slate-800">
+                        <Image className="h-4 w-4 mr-2" />
+                        Add Images
+                      </Button>
+                      <Button type="button" size="sm" onClick={() => addBlock("video")} variant="outline" className="border-slate-700 hover:bg-slate-800">
+                        <Video className="h-4 w-4 mr-2" />
+                        Add Video
+                      </Button>
                     </div>
-                  )}
-
-                  {/* Show new image previews */}
-                  {imagePreviews.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-sm text-slate-400 mb-2">New images to upload:</p>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {imagePreviews.map((preview, index) => (
-                          <div key={`preview-${index}`} className="relative group">
-                            <img
-                              src={preview}
-                              alt={`Preview ${index + 1}`}
-                              className="w-full h-32 object-cover rounded-lg"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => removeImage(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Videos Upload */}
-                <div className="space-y-2">
-                  <Label className="text-slate-300 flex items-center gap-2">
-                    <Video className="h-4 w-4" />
-                    Article Videos
-                  </Label>
-                  <div
-                    className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                      dragActiveVideos
-                        ? "border-primary bg-slate-800"
-                        : "border-slate-700 bg-slate-800/50"
-                    }`}
-                    onDragEnter={handleVideosDrag}
-                    onDragLeave={handleVideosDrag}
-                    onDragOver={handleVideosDrag}
-                    onDrop={handleVideosDrop}
-                  >
-                    <Upload className="h-12 w-12 mx-auto mb-4 text-slate-400" />
-                    <p className="text-slate-400 mb-2">
-                      Drag and drop videos here, or click to select
-                    </p>
-                    <input
-                      type="file"
-                      accept="video/*"
-                      multiple
-                      onChange={(e) => {
-                        if (e.target.files) {
-                          handleVideoFiles(Array.from(e.target.files));
-                        }
-                      }}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
                   </div>
 
-                  {/* Show existing videos from edit */}
-                  {formData.videos.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-sm text-slate-400 mb-2">Existing videos:</p>
-                      <div className="space-y-3">
-                        {formData.videos.map((url, index) => (
-                          <div key={`existing-video-${index}`} className="relative group">
-                            <video
-                              src={url}
-                              controls
-                              className="w-full max-h-48 rounded-lg bg-slate-800"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => {
-                                setFormData({
-                                  ...formData,
-                                  videos: formData.videos.filter((_, i) => i !== index)
-                                });
-                              }}
-                            >
+                  {contentBlocks.map((block, blockIndex) => (
+                    <Card key={blockIndex} className="bg-slate-800 border-slate-700">
+                      <CardContent className="pt-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            {block.type === "text" && <Type className="h-4 w-4 text-slate-400" />}
+                            {block.type === "image" && <Image className="h-4 w-4 text-slate-400" />}
+                            {block.type === "video" && <Video className="h-4 w-4 text-slate-400" />}
+                            <span className="text-sm text-slate-400 capitalize">{block.type} Block {blockIndex + 1}</span>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button type="button" size="sm" variant="ghost" onClick={() => moveBlock(blockIndex, "up")} disabled={blockIndex === 0}>
+                              <MoveUp className="h-4 w-4" />
+                            </Button>
+                            <Button type="button" size="sm" variant="ghost" onClick={() => moveBlock(blockIndex, "down")} disabled={blockIndex === contentBlocks.length - 1}>
+                              <MoveDown className="h-4 w-4" />
+                            </Button>
+                            <Button type="button" size="sm" variant="ghost" onClick={() => removeBlock(blockIndex)}>
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                        </div>
 
-                  {/* Show new video previews */}
-                  {videoPreviews.length > 0 && (
-                    <div className="mt-4">
-                      <p className="text-sm text-slate-400 mb-2">New videos to upload:</p>
-                      <div className="space-y-3">
-                        {videoPreviews.map((preview, index) => (
-                          <div key={`preview-video-${index}`} className="relative group">
-                            <video
-                              src={preview}
-                              controls
-                              className="w-full max-h-48 rounded-lg bg-slate-800"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => removeVideo(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                        {block.type === "text" && (
+                          <Textarea
+                            placeholder="Enter your text content here..."
+                            value={block.content}
+                            onChange={(e) => updateBlock(blockIndex, { content: e.target.value })}
+                            rows={6}
+                            className="bg-slate-900 border-slate-700 text-slate-100"
+                          />
+                        )}
+
+                        {block.type === "image" && (
+                          <div className="space-y-3">
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant={block.layout === "single" ? "default" : "outline"}
+                                onClick={() => updateBlock(blockIndex, { layout: "single" })}
+                                className={block.layout !== "single" ? "border-slate-700 hover:bg-slate-800" : ""}
+                              >
+                                Single
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant={block.layout === "grid" ? "default" : "outline"}
+                                onClick={() => updateBlock(blockIndex, { layout: "grid" })}
+                                className={block.layout !== "grid" ? "border-slate-700 hover:bg-slate-800" : ""}
+                              >
+                                <Grid className="h-4 w-4 mr-2" />
+                                Grid
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant={block.layout === "row" ? "default" : "outline"}
+                                onClick={() => updateBlock(blockIndex, { layout: "row" })}
+                                className={block.layout !== "row" ? "border-slate-700 hover:bg-slate-800" : ""}
+                              >
+                                <Columns className="h-4 w-4 mr-2" />
+                                Row
+                              </Button>
+                            </div>
+                            
+                            <div className="relative border-2 border-dashed rounded-lg p-6 text-center border-slate-700 bg-slate-900/50">
+                              <Upload className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                              <p className="text-sm text-slate-400 mb-1">Add images to this block</p>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={async (e) => {
+                                  if (e.target.files) {
+                                    const files = Array.from(e.target.files);
+                                    const urls: string[] = [];
+                                    for (const file of files) {
+                                      const fileExt = file.name.split(".").pop();
+                                      const fileName = `${Math.random()}.${fileExt}`;
+                                      const { error: uploadError } = await supabase.storage
+                                        .from("article-images")
+                                        .upload(fileName, file);
+                                      if (!uploadError) {
+                                        const { data } = supabase.storage
+                                          .from("article-images")
+                                          .getPublicUrl(fileName);
+                                        urls.push(data.publicUrl);
+                                      }
+                                    }
+                                    addMediaToBlock(blockIndex, urls);
+                                  }
+                                }}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              />
+                            </div>
+                            
+                            {block.urls.length > 0 && (
+                              <div className={`grid gap-3 ${block.layout === "grid" ? "grid-cols-2" : block.layout === "row" ? "grid-cols-3" : "grid-cols-1"}`}>
+                                {block.urls.map((url, urlIndex) => (
+                                  <div key={urlIndex} className="relative group">
+                                    <img src={url} alt="" className="w-full h-32 object-cover rounded-lg" />
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      size="sm"
+                                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={() => removeMediaFromBlock(blockIndex, urlIndex)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                        )}
+
+                        {block.type === "video" && (
+                          <div className="space-y-3">
+                            <div className="relative border-2 border-dashed rounded-lg p-6 text-center border-slate-700 bg-slate-900/50">
+                              <Upload className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                              <p className="text-sm text-slate-400 mb-1">Add videos to this block</p>
+                              <input
+                                type="file"
+                                accept="video/*"
+                                multiple
+                                onChange={async (e) => {
+                                  if (e.target.files) {
+                                    const files = Array.from(e.target.files);
+                                    const urls: string[] = [];
+                                    for (const file of files) {
+                                      const fileExt = file.name.split(".").pop();
+                                      const fileName = `${Math.random()}.${fileExt}`;
+                                      const { error: uploadError } = await supabase.storage
+                                        .from("article-videos")
+                                        .upload(fileName, file);
+                                      if (!uploadError) {
+                                        const { data } = supabase.storage
+                                          .from("article-videos")
+                                          .getPublicUrl(fileName);
+                                        urls.push(data.publicUrl);
+                                      }
+                                    }
+                                    addMediaToBlock(blockIndex, urls);
+                                  }
+                                }}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              />
+                            </div>
+                            
+                            {block.urls.length > 0 && (
+                              <div className="space-y-3">
+                                {block.urls.map((url, urlIndex) => (
+                                  <div key={urlIndex} className="relative group">
+                                    <video src={url} controls className="w-full max-h-48 rounded-lg bg-slate-900" />
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      size="sm"
+                                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={() => removeMediaFromBlock(blockIndex, urlIndex)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
 
                 <div className="space-y-2">

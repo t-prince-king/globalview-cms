@@ -19,6 +19,7 @@ export type Database = {
           author: string
           category: Database["public"]["Enums"]["article_category"]
           content: string
+          content_blocks: Json | null
           created_at: string | null
           description: string
           id: string
@@ -39,6 +40,7 @@ export type Database = {
           author?: string
           category: Database["public"]["Enums"]["article_category"]
           content: string
+          content_blocks?: Json | null
           created_at?: string | null
           description: string
           id?: string
@@ -59,6 +61,7 @@ export type Database = {
           author?: string
           category?: Database["public"]["Enums"]["article_category"]
           content?: string
+          content_blocks?: Json | null
           created_at?: string | null
           description?: string
           id?: string
