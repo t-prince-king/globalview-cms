@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
-import { Search, Moon, Sun, Menu } from "lucide-react";
+import { Search, Moon, Sun, Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const categories = [
   { name: "World", slug: "world" },
@@ -17,11 +19,36 @@ const categories = [
 export const Navigation = () => {
   const [isDark, setIsDark] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle("dark");
+  };
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Failed to logout");
+    } else {
+      toast.success("Logged out successfully");
+      navigate("/");
+    }
   };
 
   return (
@@ -53,14 +80,26 @@ export const Navigation = () => {
                 <Moon className="h-5 w-5" />
               )}
             </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => navigate("/auth")}
-              className="hidden md:flex"
-            >
-              Admin Login
-            </Button>
+            {isLoggedIn ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="hidden md:flex gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => navigate("/auth")}
+                className="hidden md:flex"
+              >
+                Admin Login
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -87,14 +126,26 @@ export const Navigation = () => {
               {category.name}
             </Link>
           ))}
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => navigate("/auth")}
-            className="md:hidden mt-2"
-          >
-            Admin Login
-          </Button>
+          {isLoggedIn ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="md:hidden mt-2 gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => navigate("/auth")}
+              className="md:hidden mt-2"
+            >
+              Admin Login
+            </Button>
+          )}
         </div>
       </div>
     </nav>
