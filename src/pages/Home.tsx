@@ -5,6 +5,14 @@ import { Footer } from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-global.jpg";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 interface Article {
   id: string;
@@ -20,23 +28,22 @@ interface Article {
 }
 
 export const Home = () => {
-  const [featuredArticle, setFeaturedArticle] = useState<Article | null>(null);
+  const [featuredArticles, setFeaturedArticles] = useState<Article[]>([]);
   const [trendingArticles, setTrendingArticles] = useState<Article[]>([]);
   const [editorsPicks, setEditorsPicks] = useState<Article[]>([]);
 
   useEffect(() => {
     const fetchArticles = async () => {
-      // Featured article
+      // Featured articles (multiple for carousel)
       const { data: featured } = await supabase
         .from("articles")
         .select("*")
         .eq("is_featured", true)
         .order("published_at", { ascending: false })
-        .limit(1)
-        .single();
+        .limit(5);
 
       if (featured) {
-        setFeaturedArticle(featured);
+        setFeaturedArticles(featured);
       }
 
       // Trending articles (most viewed)
@@ -72,14 +79,35 @@ export const Home = () => {
       <BreakingNewsTicker />
 
       <main className="container mx-auto px-4 py-8">
-        {/* Hero/Featured Article */}
+        {/* Hero/Featured Carousel */}
         <section className="mb-12">
-          {featuredArticle ? (
-            <ArticleCard
-              {...featuredArticle}
-              imageUrl={featuredArticle.image_url || heroImage}
-              size="large"
-            />
+          {featuredArticles.length > 0 ? (
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              plugins={[
+                Autoplay({
+                  delay: 5000,
+                }),
+              ]}
+              className="w-full"
+            >
+              <CarouselContent>
+                {featuredArticles.map((article) => (
+                  <CarouselItem key={article.id}>
+                    <ArticleCard
+                      {...article}
+                      imageUrl={article.image_url || heroImage}
+                      size="large"
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-4" />
+              <CarouselNext className="right-4" />
+            </Carousel>
           ) : (
             <div className="relative h-96 overflow-hidden rounded-lg shadow-article">
               <img
