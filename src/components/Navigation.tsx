@@ -65,16 +65,14 @@ export const Navigation = () => {
                 See the World, One Story at a Time
               </p>
             </Link>
-            {isLoggedIn && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/admin")}
-                className="hidden md:flex"
-              >
-                Admin Panel
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/admin")}
+              className="hidden md:flex"
+            >
+              Admin Panel
+            </Button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -129,26 +127,24 @@ export const Navigation = () => {
               {category.name}
             </Link>
           ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/admin")}
+            className="md:hidden mt-2"
+          >
+            Admin Panel
+          </Button>
           {isLoggedIn && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/admin")}
-                className="md:hidden mt-2"
-              >
-                Admin Panel
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="md:hidden gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </Button>
-            </>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="md:hidden gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
           )}
         </div>
       </div>
