@@ -32,7 +32,7 @@ export const Search = () => {
     const { data } = await supabase
       .from("articles")
       .select("*")
-      .or(`title.ilike.%${query}%,description.ilike.%${query}%,tags.cs.{${query}}`)
+      .or(`title.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%,tags.cs.{${query}}`)
       .order("published_at", { ascending: false });
 
     if (data) {

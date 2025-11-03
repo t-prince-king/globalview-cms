@@ -56,14 +56,26 @@ export const Navigation = () => {
       <div className="container mx-auto px-4">
         {/* Top Bar */}
         <div className="flex items-center justify-between py-4">
-          <Link to="/" className="flex flex-col">
-            <h1 className="text-2xl md:text-3xl font-serif font-bold text-primary">
-              GlobalView Times
-            </h1>
-            <p className="text-xs md:text-sm text-muted-foreground italic">
-              See the World, One Story at a Time
-            </p>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex flex-col">
+              <h1 className="text-2xl md:text-3xl font-serif font-bold text-primary">
+                GlobalView Times
+              </h1>
+              <p className="text-xs md:text-sm text-muted-foreground italic">
+                See the World, One Story at a Time
+              </p>
+            </Link>
+            {isLoggedIn && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/admin")}
+                className="hidden md:flex"
+              >
+                Admin Panel
+              </Button>
+            )}
+          </div>
 
           <div className="flex items-center gap-2">
             <Button
@@ -80,7 +92,7 @@ export const Navigation = () => {
                 <Moon className="h-5 w-5" />
               )}
             </Button>
-            {isLoggedIn ? (
+            {isLoggedIn && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -89,15 +101,6 @@ export const Navigation = () => {
               >
                 <LogOut className="h-4 w-4" />
                 Logout
-              </Button>
-            ) : (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => navigate("/auth")}
-                className="hidden md:flex"
-              >
-                Admin Login
               </Button>
             )}
             <Button
@@ -126,25 +129,26 @@ export const Navigation = () => {
               {category.name}
             </Link>
           ))}
-          {isLoggedIn ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="md:hidden mt-2 gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          ) : (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => navigate("/auth")}
-              className="md:hidden mt-2"
-            >
-              Admin Login
-            </Button>
+          {isLoggedIn && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/admin")}
+                className="md:hidden mt-2"
+              >
+                Admin Panel
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="md:hidden gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </>
           )}
         </div>
       </div>

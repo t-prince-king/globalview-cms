@@ -1,20 +1,27 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+
+interface BreakingNewsItem {
+  title: string;
+  slug: string;
+}
 
 export const BreakingNewsTicker = () => {
-  const [breakingNews, setBreakingNews] = useState<string[]>([]);
+  const [breakingNews, setBreakingNews] = useState<BreakingNewsItem[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBreakingNews = async () => {
       const { data } = await supabase
         .from("articles")
-        .select("title")
+        .select("title, slug")
         .eq("is_breaking", true)
         .order("published_at", { ascending: false })
         .limit(3);
 
       if (data) {
-        setBreakingNews(data.map((item) => item.title));
+        setBreakingNews(data);
       }
     };
 
@@ -32,8 +39,12 @@ export const BreakingNewsTicker = () => {
           </span>
           <div className="flex gap-8 animate-scroll">
             {breakingNews.map((news, index) => (
-              <span key={index} className="text-sm whitespace-nowrap">
-                {news}
+              <span 
+                key={index} 
+                className="text-sm whitespace-nowrap cursor-pointer hover:underline"
+                onClick={() => navigate(`/article/${news.slug}`)}
+              >
+                {news.title}
               </span>
             ))}
           </div>
