@@ -755,6 +755,18 @@ export const Admin = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="author_email" className="text-slate-300">Author Email</Label>
+                  <Input
+                    id="author_email"
+                    type="email"
+                    placeholder="author@example.com"
+                    value={formData.author_email}
+                    onChange={(e) => setFormData({ ...formData, author_email: e.target.value })}
+                    className="bg-slate-800 border-slate-700 text-slate-100"
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="tags" className="text-slate-300">Tags (comma-separated)</Label>
                   <Input
                     id="tags"

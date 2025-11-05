@@ -1,6 +1,7 @@
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ArticleCard } from "@/components/ArticleCard";
+import { ImageViewer } from "@/components/ImageViewer";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -163,26 +164,21 @@ export const Article = () => {
                       ? "grid grid-cols-3 gap-4"
                       : "space-y-6"
                   }`}>
-                    {block.urls.map((url, imgIndex) => (
-                      <div key={imgIndex} className="rounded-lg overflow-hidden shadow-lg">
-                        <img
-                          src={url}
-                          alt={`${article.title} - Image ${imgIndex + 1}`}
-                          className={`w-full ${block.layout === "single" ? "max-h-[600px] object-contain" : "h-64 object-cover"} bg-muted`}
-                        />
-                      </div>
-                    ))}
+                    <ImageViewer images={block.urls} />
                   </div>
                 )}
                 
                 {block.type === "video" && block.urls.length > 0 && (
                   <div className="space-y-6">
                     {block.urls.map((url, vidIndex) => (
-                      <div key={vidIndex} className="rounded-lg overflow-hidden shadow-lg">
+                      <div key={vidIndex} className="rounded-xl overflow-hidden shadow-2xl bg-black/5 backdrop-blur-sm border border-border/50">
                         <video
                           src={url}
                           controls
-                          className="w-full max-h-[600px] bg-muted"
+                          controlsList="nodownload"
+                          preload="metadata"
+                          className="w-full max-h-[600px] object-contain bg-black"
+                          poster=""
                         >
                           Your browser does not support the video tag.
                         </video>
@@ -197,27 +193,22 @@ export const Article = () => {
           <>
             {/* Fallback to old format */}
             {article.images && article.images.length > 0 && (
-              <div className="space-y-6 mb-8">
-                {article.images.map((imageUrl, index) => (
-                  <div key={index} className="rounded-lg overflow-hidden shadow-lg">
-                    <img
-                      src={imageUrl}
-                      alt={`${article.title} - Image ${index + 1}`}
-                      className="w-full max-h-[600px] object-contain bg-muted"
-                    />
-                  </div>
-                ))}
+              <div className="mb-8">
+                <ImageViewer images={article.images} />
               </div>
             )}
 
             {article.videos && article.videos.length > 0 && (
               <div className="space-y-6 mb-8">
                 {article.videos.map((videoUrl, index) => (
-                  <div key={index} className="rounded-lg overflow-hidden shadow-lg">
+                  <div key={index} className="rounded-xl overflow-hidden shadow-2xl bg-black/5 backdrop-blur-sm border border-border/50">
                     <video
                       src={videoUrl}
                       controls
-                      className="w-full max-h-[600px] bg-muted"
+                      controlsList="nodownload"
+                      preload="metadata"
+                      className="w-full max-h-[600px] object-contain bg-black"
+                      poster=""
                     >
                       Your browser does not support the video tag.
                     </video>

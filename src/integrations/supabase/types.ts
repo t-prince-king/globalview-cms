@@ -17,6 +17,7 @@ export type Database = {
       articles: {
         Row: {
           author: string
+          author_email: string | null
           category: Database["public"]["Enums"]["article_category"]
           content: string
           content_blocks: Json | null
@@ -38,6 +39,7 @@ export type Database = {
         }
         Insert: {
           author?: string
+          author_email?: string | null
           category: Database["public"]["Enums"]["article_category"]
           content: string
           content_blocks?: Json | null
@@ -59,6 +61,7 @@ export type Database = {
         }
         Update: {
           author?: string
+          author_email?: string | null
           category?: Database["public"]["Enums"]["article_category"]
           content?: string
           content_blocks?: Json | null
