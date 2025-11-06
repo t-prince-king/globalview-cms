@@ -10,6 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { LogOut, Plus, Edit, Trash2, Home, Upload, X, Image, Video, Type, MoveUp, MoveDown, Grid, Columns } from "lucide-react";
+import { UserManagement } from "@/components/UserManagement";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ContentBlock = 
   | { type: "text"; content: string }
@@ -283,8 +285,9 @@ export const Admin = () => {
         tags: tagsArray,
         images,
         videos,
-        image_url: images[0] || null, // Keep for backward compatibility
+        image_url: images[0] || null,
         content_blocks: contentBlocks,
+        user_id: user?.id,
       };
 
       if (editingId) {
@@ -474,13 +477,20 @@ export const Admin = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Manage Articles</h2>
-          <Button onClick={() => setShowForm(!showForm)}>
-            <Plus className="h-4 w-4 mr-2" />
-            {showForm ? "Cancel" : "New Article"}
-          </Button>
-        </div>
+        <Tabs defaultValue="articles" className="space-y-6">
+          <TabsList className="bg-slate-900 border border-slate-800">
+            <TabsTrigger value="articles">Articles</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="articles" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Manage Articles</h2>
+              <Button onClick={() => setShowForm(!showForm)}>
+                <Plus className="h-4 w-4 mr-2" />
+                {showForm ? "Cancel" : "New Article"}
+              </Button>
+            </div>
 
         {showForm && (
           <Card className="mb-8 bg-slate-900 border-slate-800">
@@ -870,6 +880,12 @@ export const Admin = () => {
             </Card>
           ))}
         </div>
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UserManagement />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

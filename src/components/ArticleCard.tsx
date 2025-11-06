@@ -60,20 +60,22 @@ export const ArticleCard = ({
     return (
       <Link
         to={`/article/${slug}`}
-        className="group flex gap-3 hover:bg-news-hover p-2 rounded transition-colors"
+        className="group flex gap-4 hover:bg-news-hover p-3 rounded-lg transition-all duration-300"
       >
         {imageUrl && (
-          <img
-            src={imageUrl}
-            alt={title}
-            className="w-24 h-24 object-cover rounded flex-shrink-0"
-          />
+          <div className="relative w-32 h-24 flex-shrink-0 overflow-hidden rounded-lg">
+            <img
+              src={imageUrl}
+              alt={title}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            />
+          </div>
         )}
         <div className="flex-1 min-w-0">
-          <h3 className="font-serif font-bold text-sm line-clamp-2 group-hover:text-accent transition-colors">
+          <h3 className="font-serif font-bold text-sm line-clamp-2 group-hover:text-accent transition-colors mb-2">
             {title}
           </h3>
-          <p className="text-xs text-muted-foreground mt-1">{formattedDate}</p>
+          <p className="text-xs text-muted-foreground">{formattedDate}</p>
         </div>
       </Link>
     );
@@ -82,28 +84,33 @@ export const ArticleCard = ({
   return (
     <Link
       to={`/article/${slug}`}
-      className="group block overflow-hidden rounded-lg shadow-article hover:shadow-hover transition-all duration-300 bg-card"
+      className="group block overflow-hidden rounded-xl shadow-article hover:shadow-hover transition-all duration-300 bg-card"
     >
-      {imageUrl && (
-        <div className="relative h-48 overflow-hidden">
+      {imageUrl ? (
+        <div className="relative h-56 overflow-hidden">
           <img
             src={imageUrl}
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </div>
+      ) : (
+        <div className="h-56 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+          <span className="text-4xl opacity-20">{category}</span>
         </div>
       )}
-      <div className="p-4">
-        <Badge variant="outline" className="mb-2">
+      <div className="p-5">
+        <Badge variant="outline" className="mb-3">
           {category}
         </Badge>
-        <h3 className="font-serif font-bold text-lg line-clamp-2 mb-2 group-hover:text-accent transition-colors">
+        <h3 className="font-serif font-bold text-xl line-clamp-2 mb-3 group-hover:text-accent transition-colors">
           {title}
         </h3>
-        <p className="text-sm text-muted-foreground line-clamp-2">
+        <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
           {description}
         </p>
-        <p className="text-xs text-muted-foreground mt-3">{formattedDate}</p>
+        <p className="text-xs text-muted-foreground">{formattedDate}</p>
       </div>
     </Link>
   );

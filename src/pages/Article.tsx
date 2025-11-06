@@ -2,6 +2,8 @@ import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ArticleCard } from "@/components/ArticleCard";
 import { ImageViewer } from "@/components/ImageViewer";
+import { VideoPlayer } from "@/components/VideoPlayer";
+import { ArticleEngagement } from "@/components/ArticleEngagement";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -171,18 +173,7 @@ export const Article = () => {
                 {block.type === "video" && block.urls.length > 0 && (
                   <div className="space-y-6">
                     {block.urls.map((url, vidIndex) => (
-                      <div key={vidIndex} className="rounded-xl overflow-hidden shadow-2xl bg-black/5 backdrop-blur-sm border border-border/50">
-                        <video
-                          src={url}
-                          controls
-                          controlsList="nodownload"
-                          preload="metadata"
-                          className="w-full max-h-[600px] object-contain bg-black"
-                          poster=""
-                        >
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
+                      <VideoPlayer key={vidIndex} src={url} />
                     ))}
                   </div>
                 )}
@@ -201,18 +192,7 @@ export const Article = () => {
             {article.videos && article.videos.length > 0 && (
               <div className="space-y-6 mb-8">
                 {article.videos.map((videoUrl, index) => (
-                  <div key={index} className="rounded-xl overflow-hidden shadow-2xl bg-black/5 backdrop-blur-sm border border-border/50">
-                    <video
-                      src={videoUrl}
-                      controls
-                      controlsList="nodownload"
-                      preload="metadata"
-                      className="w-full max-h-[600px] object-contain bg-black"
-                      poster=""
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
+                  <VideoPlayer key={index} src={videoUrl} />
                 ))}
               </div>
             )}
@@ -269,6 +249,9 @@ export const Article = () => {
             ))}
           </div>
         )}
+
+        {/* Likes and Comments */}
+        <ArticleEngagement articleId={article.id} />
 
         {relatedArticles.length > 0 && (
           <section className="mt-16 pt-8 border-t">
