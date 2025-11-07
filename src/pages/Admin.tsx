@@ -556,6 +556,67 @@ export const Admin = () => {
                   />
                 </div>
 
+                {/* Cover Image Upload */}
+                <div className="space-y-2">
+                  <Label className="text-slate-300">Article Cover Image</Label>
+                  <div 
+                    className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      dragActiveImages ? "border-blue-500 bg-blue-500/10" : "border-slate-700 bg-slate-900/50"
+                    }`}
+                    onDragEnter={handleImagesDrag}
+                    onDragLeave={handleImagesDrag}
+                    onDragOver={handleImagesDrag}
+                    onDrop={handleImagesDrop}
+                  >
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                    <p className="text-sm text-slate-400 mb-1">
+                      Drag and drop cover image here, or click to select
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      First uploaded image will be the cover
+                    </p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => e.target.files && handleImageFiles(Array.from(e.target.files))}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </div>
+                  
+                  {/* Preview uploaded cover images */}
+                  {imagePreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mt-3">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded" />
+                          {index === 0 && (
+                            <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                              Cover
+                            </div>
+                          )}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="destructive"
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6"
+                            onClick={() => removeImage(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Show existing cover if editing */}
+                  {editingId && formData.images.length > 0 && imagePreviews.length === 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs text-slate-400 mb-2">Current cover image:</p>
+                      <img src={formData.images[0]} alt="Current cover" className="w-32 h-20 object-cover rounded" />
+                    </div>
+                  )}
+                </div>
+
                 {/* Content Blocks */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">

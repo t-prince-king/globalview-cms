@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Share2, Facebook, Twitter } from "lucide-react";
 import { Helmet } from "react-helmet";
+import { Progress } from "@/components/ui/progress";
 
 type ContentBlock = 
   | { type: "text"; content: string }
@@ -41,6 +42,7 @@ export const Article = () => {
   const [article, setArticle] = useState<ArticleData | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [readingProgress, setReadingProgress] = useState(0);
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -87,6 +89,19 @@ export const Article = () => {
     fetchArticle();
   }, [slug]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY;
+      const progress = (scrollTop / (documentHeight - windowHeight)) * 100;
+      setReadingProgress(Math.min(progress, 100));
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const shareUrl = window.location.href;
 
   if (loading) {
@@ -129,6 +144,11 @@ export const Article = () => {
         <meta name="author" content={article.author} />
         <link rel="canonical" href={window.location.href} />
       </Helmet>
+      
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <Progress value={readingProgress} className="h-1 rounded-none" />
+      </div>
+      
       <Navigation />
 
       <div className="container mx-auto px-4 py-8">
