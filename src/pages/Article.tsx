@@ -4,6 +4,7 @@ import { ArticleCard } from "@/components/ArticleCard";
 import { ImageViewer } from "@/components/ImageViewer";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { ArticleEngagement } from "@/components/ArticleEngagement";
+import { BookmarkButton } from "@/components/BookmarkButton";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,146 +131,151 @@ export const Article = () => {
       </Helmet>
       <Navigation />
 
-      <article className="container mx-auto px-4 py-8 max-w-4xl">
-        <Badge className="mb-4">{article.category}</Badge>
-
-        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
-          {article.title}
-        </h1>
-
-        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
-          <span>By {article.author}</span>
-          <span>•</span>
-          <span>{format(new Date(article.published_at), "MMMM d, yyyy")}</span>
-        </div>
-
-        {/* Display content blocks if available */}
-        {article.content_blocks && article.content_blocks.length > 0 ? (
-          <div className="space-y-8 mb-12">
-            {article.content_blocks.map((block, index) => (
-              <div key={index}>
-                {block.type === "text" && (
-                  <div className="prose prose-lg max-w-none">
-                    {block.content.split("\n\n").map((paragraph, pIndex) => (
-                      <p key={pIndex} className="mb-4 leading-relaxed">
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                )}
-                
-                {block.type === "image" && block.urls.length > 0 && (
-                  <div className={`${
-                    block.layout === "grid" 
-                      ? "grid grid-cols-2 gap-4" 
-                      : block.layout === "row"
-                      ? "grid grid-cols-3 gap-4"
-                      : "space-y-6"
-                  }`}>
-                    <ImageViewer images={block.urls} />
-                  </div>
-                )}
-                
-                {block.type === "video" && block.urls.length > 0 && (
-                  <div className="space-y-6">
-                    {block.urls.map((url, vidIndex) => (
-                      <VideoPlayer key={vidIndex} src={url} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+      <div className="container mx-auto px-4 py-8">
+        <article className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <Badge>{article.category}</Badge>
+            <BookmarkButton articleId={article.id} />
           </div>
-        ) : (
-          <>
-            {/* Fallback to old format */}
-            {article.images && article.images.length > 0 && (
-              <div className="mb-8">
-                <ImageViewer images={article.images} />
-              </div>
-            )}
 
-            {article.videos && article.videos.length > 0 && (
-              <div className="space-y-6 mb-8">
-                {article.videos.map((videoUrl, index) => (
-                  <VideoPlayer key={index} src={videoUrl} />
+          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 text-center">
+            {article.title}
+          </h1>
+
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground mb-8">
+            <span>By {article.author}</span>
+            <span>•</span>
+            <span>{format(new Date(article.published_at), "MMMM d, yyyy")}</span>
+          </div>
+
+          {/* Display content blocks if available */}
+          {article.content_blocks && article.content_blocks.length > 0 ? (
+            <div className="space-y-8 mb-12">
+              {article.content_blocks.map((block, index) => (
+                <div key={index}>
+                  {block.type === "text" && (
+                    <div className="prose prose-lg max-w-none mx-auto">
+                      {block.content.split("\n\n").map((paragraph, pIndex) => (
+                        <p key={pIndex} className="mb-4 leading-relaxed text-center">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {block.type === "image" && block.urls.length > 0 && (
+                    <div className={`max-w-4xl mx-auto ${
+                      block.layout === "grid" 
+                        ? "grid grid-cols-2 gap-4" 
+                        : block.layout === "row"
+                        ? "grid grid-cols-3 gap-4"
+                        : "space-y-6"
+                    }`}>
+                      <ImageViewer images={block.urls} />
+                    </div>
+                  )}
+                  
+                  {block.type === "video" && block.urls.length > 0 && (
+                    <div className="space-y-6 max-w-4xl mx-auto">
+                      {block.urls.map((url, vidIndex) => (
+                        <VideoPlayer key={vidIndex} src={url} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* Fallback to old format */}
+              {article.images && article.images.length > 0 && (
+                <div className="mb-8 max-w-4xl mx-auto">
+                  <ImageViewer images={article.images} />
+                </div>
+              )}
+
+              {article.videos && article.videos.length > 0 && (
+                <div className="space-y-6 mb-8 max-w-4xl mx-auto">
+                  {article.videos.map((videoUrl, index) => (
+                    <VideoPlayer key={index} src={videoUrl} />
+                  ))}
+                </div>
+              )}
+              
+              <div className="prose prose-lg max-w-none mb-12 mx-auto">
+                {article.content.split("\n\n").map((paragraph, index) => (
+                  <p key={index} className="mb-4 leading-relaxed text-center">
+                    {paragraph}
+                  </p>
                 ))}
               </div>
-            )}
-            
-            <div className="prose prose-lg max-w-none mb-12">
-              {article.content.split("\n\n").map((paragraph, index) => (
-                <p key={index} className="mb-4 leading-relaxed">
-                  {paragraph}
-                </p>
-              ))}
-            </div>
-          </>
-        )}
+            </>
+          )}
 
-        <div className="flex gap-2 mb-8">
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              window.open(
-                `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
-                "_blank"
-              )
-            }
-          >
-            <Facebook className="h-4 w-4 mr-2" />
-            Facebook
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              window.open(
-                `https://twitter.com/intent/tweet?url=${shareUrl}&text=${article.title}`,
-                "_blank"
-              )
-            }
-          >
-            <Twitter className="h-4 w-4 mr-2" />
-            Twitter
-          </Button>
-        </div>
-
-        {article.tags && article.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-12">
-            {article.tags.map((tag, index) => (
-              <Badge key={index} variant="secondary">
-                {tag}
-              </Badge>
-            ))}
+          <div className="flex justify-center gap-2 mb-8">
+            <Button variant="outline" size="sm">
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                window.open(
+                  `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
+                  "_blank"
+                )
+              }
+            >
+              <Facebook className="h-4 w-4 mr-2" />
+              Facebook
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                window.open(
+                  `https://twitter.com/intent/tweet?url=${shareUrl}&text=${article.title}`,
+                  "_blank"
+                )
+              }
+            >
+              <Twitter className="h-4 w-4 mr-2" />
+              Twitter
+            </Button>
           </div>
-        )}
 
-        {/* Likes and Comments */}
-        <ArticleEngagement articleId={article.id} />
-
-        {relatedArticles.length > 0 && (
-          <section className="mt-16 pt-8 border-t">
-            <h2 className="text-2xl font-serif font-bold mb-6">
-              Related Articles
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {relatedArticles.map((related) => (
-                <ArticleCard
-                  key={related.id}
-                  {...related}
-                  imageUrl={related.images?.[0] || related.image_url || undefined}
-                />
+          {article.tags && article.tags.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-2 mb-12">
+              {article.tags.map((tag, index) => (
+                <Badge key={index} variant="secondary">
+                  {tag}
+                </Badge>
               ))}
             </div>
-          </section>
-        )}
-      </article>
+          )}
+
+          {/* Likes and Comments */}
+          <ArticleEngagement articleId={article.id} />
+
+          {relatedArticles.length > 0 && (
+            <section className="mt-16 pt-8 border-t">
+              <h2 className="text-2xl font-serif font-bold mb-6 text-center">
+                Related Articles
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {relatedArticles.map((related) => (
+                  <ArticleCard
+                    key={related.id}
+                    {...related}
+                    imageUrl={related.images?.[0] || related.image_url || undefined}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </article>
+      </div>
 
       <Footer />
     </div>

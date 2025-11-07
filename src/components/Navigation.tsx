@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Search, Moon, Sun, Menu, LogOut } from "lucide-react";
+import { Search, Moon, Sun, Menu, LogOut, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -83,6 +83,16 @@ export const Navigation = () => {
             >
               <Search className="h-5 w-5" />
             </Button>
+            {isLoggedIn && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/bookmarks")}
+                title="My Bookmarks"
+              >
+                <Bookmark className="h-5 w-5" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {isDark ? (
                 <Sun className="h-5 w-5" />
@@ -136,15 +146,26 @@ export const Navigation = () => {
             Admin Panel
           </Button>
           {isLoggedIn && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="md:hidden gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/bookmarks")}
+                className="md:hidden gap-2"
+              >
+                <Bookmark className="h-4 w-4" />
+                Bookmarks
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="md:hidden gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </>
           )}
         </div>
       </div>
