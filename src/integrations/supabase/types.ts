@@ -200,6 +200,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ticker_items: {
+        Row: {
+          content: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          link_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          link_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          link_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ticker_settings: {
+        Row: {
+          created_at: string
+          display_mode: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_mode?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_mode?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
