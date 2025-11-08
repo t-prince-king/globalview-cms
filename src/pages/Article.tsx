@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Share2, Facebook, Twitter } from "lucide-react";
 import { Helmet } from "react-helmet";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 
 type ContentBlock = 
   | { type: "text"; content: string }
@@ -233,7 +234,14 @@ export const Article = () => {
           )}
 
           <div className="flex justify-center gap-2 mb-8">
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(shareUrl);
+                toast.success("Link copied to clipboard!");
+              }}
+            >
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </Button>

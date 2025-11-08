@@ -32,8 +32,11 @@ export const ArticleEngagement = ({ articleId }: ArticleEngagementProps) => {
 
   useEffect(() => {
     checkAuth();
-    fetchEngagementData();
   }, [articleId]);
+
+  useEffect(() => {
+    fetchEngagementData();
+  }, [articleId, user]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -135,18 +138,51 @@ export const ArticleEngagement = ({ articleId }: ArticleEngagementProps) => {
     }
 
     try {
-      await supabase
+      const { data: commentData, error } = await supabase
         .from("article_comments")
         .insert({
           article_id: articleId,
           user_id: user.id,
           content: newComment.trim(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Get article author email and user display name for notification
+      const { data: articleData } = await supabase
+        .from("articles")
+        .select("author_email, title, slug")
+        .eq("id", articleId)
+        .single();
+
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", user.id)
+        .single();
+
+      // Send notification email to article author
+      if (articleData?.author_email) {
+        await supabase.functions.invoke("send-notification-email", {
+          body: {
+            to: articleData.author_email,
+            subject: `New comment on "${articleData.title}"`,
+            type: "comment",
+            articleTitle: articleData.title,
+            articleUrl: `${window.location.origin}/article/${articleData.slug}`,
+            userName: userProfile?.display_name || "Anonymous",
+            commentContent: newComment.trim(),
+          },
         });
+      }
 
       setNewComment("");
       toast.success("Comment posted!");
       fetchEngagementData();
     } catch (error) {
+      console.error("Error posting comment:", error);
       toast.error("Failed to post comment");
     }
   };
