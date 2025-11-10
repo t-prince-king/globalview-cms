@@ -12,6 +12,7 @@ interface TickerItem {
 
 export const BreakingNewsTicker = () => {
   const [tickerItems, setTickerItems] = useState<TickerItem[]>([]);
+  const [animationType, setAnimationType] = useState<string>('scroll');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -69,18 +70,6 @@ export const BreakingNewsTicker = () => {
     fetchTickerContent();
   }, []);
 
-  if (tickerItems.length === 0) return null;
-
-  const handleItemClick = (item: TickerItem) => {
-    if (item.type === 'breaking' && item.slug) {
-      navigate(`/article/${item.slug}`);
-    } else if (item.type === 'custom' && item.link_url) {
-      window.open(item.link_url, '_blank');
-    }
-  };
-
-  const [animationType, setAnimationType] = useState<string>('scroll');
-
   useEffect(() => {
     const fetchAnimationType = async () => {
       const { data: settings } = await supabase
@@ -95,6 +84,16 @@ export const BreakingNewsTicker = () => {
     
     fetchAnimationType();
   }, []);
+
+  if (tickerItems.length === 0) return null;
+
+  const handleItemClick = (item: TickerItem) => {
+    if (item.type === 'breaking' && item.slug) {
+      navigate(`/article/${item.slug}`);
+    } else if (item.type === 'custom' && item.link_url) {
+      window.open(item.link_url, '_blank');
+    }
+  };
 
   const getAnimationClass = () => {
     switch(animationType) {
