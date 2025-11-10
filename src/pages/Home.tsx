@@ -2,6 +2,7 @@ import { Navigation } from "@/components/Navigation";
 import { BreakingNewsTicker } from "@/components/BreakingNewsTicker";
 import { ArticleCard } from "@/components/ArticleCard";
 import { Footer } from "@/components/Footer";
+import { SubscriptionForm } from "@/components/SubscriptionForm";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-global.jpg";
@@ -79,6 +80,11 @@ export const Home = () => {
       <BreakingNewsTicker />
 
       <main className="container mx-auto px-4 py-8">
+        {/* Subscription Form */}
+        <section className="mb-12">
+          <SubscriptionForm />
+        </section>
+
         {/* Hero/Featured Carousel */}
         <section className="mb-12">
           {featuredArticles.length > 0 ? (

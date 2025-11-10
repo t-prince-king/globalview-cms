@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { LogOut, Plus, Edit, Trash2, Home, Upload, X, Image, Video, Type, MoveUp, MoveDown, Grid, Columns } from "lucide-react";
 import { UserManagement } from "@/components/UserManagement";
 import { TickerManagement } from "@/components/TickerManagement";
+import { SubscriptionManagement } from "@/components/SubscriptionManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ContentBlock = 
@@ -482,10 +483,11 @@ export const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="articles" className="space-y-6">
-          <TabsList className="bg-slate-900 border border-slate-800 grid w-full grid-cols-3">
+          <TabsList className="bg-slate-900 border border-slate-800 grid w-full grid-cols-2 sm:grid-cols-4">
             <TabsTrigger value="articles">Articles</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="ticker">Ticker</TabsTrigger>
+            <TabsTrigger value="subscribers">Subscribers</TabsTrigger>
           </TabsList>
 
           <TabsContent value="articles" className="space-y-6">
@@ -958,6 +960,10 @@ export const Admin = () => {
 
           <TabsContent value="ticker">
             <TickerManagement />
+          </TabsContent>
+
+          <TabsContent value="subscribers">
+            <SubscriptionManagement />
           </TabsContent>
         </Tabs>
       </main>

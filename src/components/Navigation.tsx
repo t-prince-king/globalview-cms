@@ -75,7 +75,7 @@ export const Navigation = () => {
               onClick={() => navigate("/admin")}
               className="hidden md:flex"
             >
-              Admin Panel
+              Login
             </Button>
           </div>
 
@@ -147,7 +147,7 @@ export const Navigation = () => {
             onClick={() => navigate("/admin")}
             className="md:hidden mt-2"
           >
-            Admin Panel
+            Login
           </Button>
           {isLoggedIn && (
             <>
