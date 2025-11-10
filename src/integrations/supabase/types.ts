@@ -232,18 +232,21 @@ export type Database = {
       }
       ticker_settings: {
         Row: {
+          animation_type: string
           created_at: string
           display_mode: string
           id: string
           updated_at: string
         }
         Insert: {
+          animation_type?: string
           created_at?: string
           display_mode?: string
           id?: string
           updated_at?: string
         }
         Update: {
+          animation_type?: string
           created_at?: string
           display_mode?: string
           id?: string

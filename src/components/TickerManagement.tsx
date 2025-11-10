@@ -19,6 +19,7 @@ interface TickerItem {
 interface TickerSettings {
   id: string;
   display_mode: 'breaking_news' | 'custom' | 'both';
+  animation_type: 'scroll' | 'fade' | 'slide';
 }
 
 export const TickerManagement = () => {
@@ -76,6 +77,29 @@ export const TickerManagement = () => {
       toast({
         title: "Success",
         description: "Display mode updated",
+      });
+    }
+  };
+
+  const handleAnimationChange = async (animation: string) => {
+    if (!settings) return;
+
+    const { error } = await supabase
+      .from("ticker_settings")
+      .update({ animation_type: animation })
+      .eq("id", settings.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update animation",
+        variant: "destructive",
+      });
+    } else {
+      setSettings({ ...settings, animation_type: animation as any });
+      toast({
+        title: "Success",
+        description: "Animation updated",
       });
     }
   };
@@ -161,7 +185,7 @@ export const TickerManagement = () => {
         <CardHeader>
           <CardTitle className="text-slate-100">Ticker Display Settings</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="display-mode" className="text-slate-200">What to Display</Label>
             <Select
@@ -181,13 +205,33 @@ export const TickerManagement = () => {
               Choose what appears in the ticker bar at the top of your site
             </p>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="animation-type" className="text-slate-200">Animation Style</Label>
+            <Select
+              value={settings?.animation_type || 'scroll'}
+              onValueChange={handleAnimationChange}
+            >
+              <SelectTrigger id="animation-type" className="bg-slate-800 border-slate-700 text-slate-100">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="scroll">Continuous Scroll</SelectItem>
+                <SelectItem value="fade">Fade In/Out</SelectItem>
+                <SelectItem value="slide">Slide Up/Down</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-slate-400">
+              Choose how the ticker content animates
+            </p>
+          </div>
         </CardContent>
       </Card>
 
       <Card className="bg-slate-900 border-slate-800">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <CardTitle className="text-slate-100">Custom Ticker Items</CardTitle>
-          <Button onClick={() => setShowForm(!showForm)} size="sm">
+          <Button onClick={() => setShowForm(!showForm)} size="sm" className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             {showForm ? "Cancel" : "Add Item"}
           </Button>
@@ -230,24 +274,24 @@ export const TickerManagement = () => {
               tickerItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-4 border border-slate-700 rounded-lg bg-slate-800"
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-slate-700 rounded-lg bg-slate-800 gap-3"
                 >
-                  <div className="flex-1">
-                    <p className={`text-sm ${item.is_active ? 'text-slate-100' : 'text-slate-500'}`}>
+                  <div className="flex-1 w-full">
+                    <p className={`text-sm ${item.is_active ? 'text-slate-100' : 'text-slate-500'} break-words`}>
                       {item.content}
                     </p>
                     {item.link_url && (
-                      <p className="text-xs text-slate-400 mt-1">
+                      <p className="text-xs text-slate-400 mt-1 break-all">
                         Link: {item.link_url}
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleToggleActive(item)}
-                      className="border-slate-700"
+                      className="border-slate-700 flex-1 sm:flex-none"
                     >
                       {item.is_active ? (
                         <Eye className="h-4 w-4" />
@@ -259,7 +303,7 @@ export const TickerManagement = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteItem(item.id)}
-                      className="border-slate-700 text-red-400 hover:text-red-300"
+                      className="border-slate-700 text-red-400 hover:text-red-300 flex-1 sm:flex-none"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

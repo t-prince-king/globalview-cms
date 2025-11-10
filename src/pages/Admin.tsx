@@ -461,34 +461,37 @@ export const Admin = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-slate-800 bg-slate-900">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" onClick={() => navigate("/")} className="border-slate-700 hover:bg-slate-800">
-              <Home className="h-4 w-4 mr-2" />
-              Home
-            </Button>
-            <span className="text-sm text-slate-400">{user?.email}</span>
-            <Button variant="outline" size="sm" onClick={handleSignOut} className="border-slate-700 hover:bg-slate-800">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <h1 className="text-xl sm:text-2xl font-bold">Admin Dashboard</h1>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              <Button variant="outline" size="sm" onClick={() => navigate("/")} className="border-slate-700 hover:bg-slate-800 flex-1 sm:flex-none">
+                <Home className="h-4 w-4 mr-2" />
+                Home
+              </Button>
+              <span className="text-sm text-slate-400 hidden sm:inline">{user?.email}</span>
+              <span className="text-xs text-slate-400 sm:hidden truncate max-w-[150px]">{user?.email}</span>
+              <Button variant="outline" size="sm" onClick={handleSignOut} className="border-slate-700 hover:bg-slate-800 flex-1 sm:flex-none">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="articles" className="space-y-6">
-          <TabsList className="bg-slate-900 border border-slate-800">
+          <TabsList className="bg-slate-900 border border-slate-800 grid w-full grid-cols-3">
             <TabsTrigger value="articles">Articles</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="ticker">Ticker</TabsTrigger>
           </TabsList>
 
           <TabsContent value="articles" className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h2 className="text-xl font-semibold">Manage Articles</h2>
-              <Button onClick={() => setShowForm(!showForm)}>
+              <Button onClick={() => setShowForm(!showForm)} className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 {showForm ? "Cancel" : "New Article"}
               </Button>
@@ -909,35 +912,39 @@ export const Admin = () => {
         <div className="space-y-4">
           {articles.map((article) => (
             <Card key={article.id} className="bg-slate-900 border-slate-800">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-slate-100">{article.title}</h3>
-                  <div className="flex gap-2 mt-1">
-                    <span className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded">{article.category}</span>
-                    {article.is_featured && (
-                      <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">
-                        Featured
-                      </span>
-                    )}
-                    {article.is_breaking && (
-                      <span className="text-xs bg-destructive text-destructive-foreground px-2 py-1 rounded">
-                        Breaking
-                      </span>
-                    )}
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-100 break-words">{article.title}</h3>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <span className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded">{article.category}</span>
+                      {article.is_featured && (
+                        <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">
+                          Featured
+                        </span>
+                      )}
+                      {article.is_breaking && (
+                        <span className="text-xs bg-destructive text-destructive-foreground px-2 py-1 rounded">
+                          Breaking
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(article)} className="border-slate-700 hover:bg-slate-800">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(article.id)}
-                    className="border-slate-700 hover:bg-slate-800"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(article)} className="border-slate-700 hover:bg-slate-800 flex-1 sm:flex-none">
+                      <Edit className="h-4 w-4 sm:mr-0" />
+                      <span className="sm:hidden ml-2">Edit</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(article.id)}
+                      className="border-slate-700 hover:bg-slate-800 flex-1 sm:flex-none"
+                    >
+                      <Trash2 className="h-4 w-4 sm:mr-0" />
+                      <span className="sm:hidden ml-2">Delete</span>
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

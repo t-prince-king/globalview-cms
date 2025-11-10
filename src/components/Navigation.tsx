@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import logo from "@/assets/logo.jpeg";
 
 const categories = [
   { name: "World", slug: "world" },
@@ -57,13 +58,16 @@ export const Navigation = () => {
         {/* Top Bar */}
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center gap-4">
-            <Link to="/" className="flex flex-col">
-              <h1 className="text-2xl md:text-3xl font-serif font-bold text-primary">
-                GlobalView Times
-              </h1>
-              <p className="text-xs md:text-sm text-muted-foreground italic">
-                See the World, One Story at a Time
-              </p>
+            <Link to="/" className="flex items-center gap-3">
+              <img src={logo} alt="GlobalView Times Logo" className="h-10 w-10 md:h-12 md:w-12 object-contain" />
+              <div className="flex flex-col">
+                <h1 className="text-2xl md:text-3xl font-serif font-bold text-primary">
+                  GlobalView Times
+                </h1>
+                <p className="text-xs md:text-sm text-muted-foreground italic">
+                  See the World, One Story at a Time
+                </p>
+              </div>
             </Link>
             <Button
               variant="outline"

@@ -79,28 +79,53 @@ export const BreakingNewsTicker = () => {
     }
   };
 
+  const [animationType, setAnimationType] = useState<string>('scroll');
+
+  useEffect(() => {
+    const fetchAnimationType = async () => {
+      const { data: settings } = await supabase
+        .from("ticker_settings")
+        .select("animation_type")
+        .single();
+      
+      if (settings?.animation_type) {
+        setAnimationType(settings.animation_type);
+      }
+    };
+    
+    fetchAnimationType();
+  }, []);
+
+  const getAnimationClass = () => {
+    switch(animationType) {
+      case 'scroll':
+        return 'animate-[scroll_20s_linear_infinite]';
+      case 'fade':
+        return 'animate-[fade_3s_ease-in-out_infinite]';
+      case 'slide':
+        return 'animate-[slideUpDown_4s_ease-in-out_infinite]';
+      default:
+        return 'animate-[scroll_20s_linear_infinite]';
+    }
+  };
+
   return (
-    <div className="bg-gradient-accent text-accent-foreground py-2 overflow-hidden">
+    <div className="bg-gradient-accent text-accent-foreground py-3 overflow-hidden relative">
       <div className="container mx-auto px-4">
-        <div className="flex items-center gap-4">
-          <span className="font-bold text-sm whitespace-nowrap">
-            TICKER
-          </span>
-          <div className="flex gap-8 animate-scroll">
-            {tickerItems.map((item) => (
-              <span 
-                key={item.id} 
-                className={`text-sm whitespace-nowrap ${
-                  (item.type === 'breaking' && item.slug) || (item.type === 'custom' && item.link_url)
-                    ? 'cursor-pointer hover:underline'
-                    : ''
-                }`}
-                onClick={() => handleItemClick(item)}
-              >
-                {item.content}
-              </span>
-            ))}
-          </div>
+        <div className={`flex gap-8 ${getAnimationClass()}`}>
+          {tickerItems.concat(tickerItems).map((item, index) => (
+            <span 
+              key={`${item.id}-${index}`}
+              className={`text-sm whitespace-nowrap ${
+                (item.type === 'breaking' && item.slug) || (item.type === 'custom' && item.link_url)
+                  ? 'cursor-pointer hover:underline'
+                  : ''
+              }`}
+              onClick={() => handleItemClick(item)}
+            >
+              {item.content}
+            </span>
+          ))}
         </div>
       </div>
     </div>
