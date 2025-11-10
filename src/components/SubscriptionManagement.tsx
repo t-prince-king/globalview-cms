@@ -34,14 +34,18 @@ export const SubscriptionManagement = () => {
     try {
       const { data, error } = await supabase
         .from("subscriptions")
-        .select("*")
+        .select("id, email, created_at, is_active, user_id")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Subscription fetch error:", error);
+        throw error;
+      }
+      
       setSubscriptions(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching subscriptions:", error);
-      toast.error("Failed to load subscriptions");
+      toast.error(`Failed to load subscriptions: ${error.message}`);
     } finally {
       setLoading(false);
     }

@@ -32,6 +32,8 @@ export const Home = () => {
   const [featuredArticles, setFeaturedArticles] = useState<Article[]>([]);
   const [trendingArticles, setTrendingArticles] = useState<Article[]>([]);
   const [editorsPicks, setEditorsPicks] = useState<Article[]>([]);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [checkingSubscription, setCheckingSubscription] = useState(true);
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -71,7 +73,25 @@ export const Home = () => {
       }
     };
 
+    const checkSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .maybeSingle();
+        
+        setIsSubscribed(!!data);
+      }
+      
+      setCheckingSubscription(false);
+    };
+
     fetchArticles();
+    checkSubscription();
   }, []);
 
   return (
@@ -182,9 +202,11 @@ export const Home = () => {
         </div>
 
         {/* Subscription Form */}
-        <section className="mt-16">
-          <SubscriptionForm />
-        </section>
+        {!checkingSubscription && !isSubscribed && (
+          <section className="mt-16">
+            <SubscriptionForm />
+          </section>
+        )}
       </main>
 
       <Footer />
