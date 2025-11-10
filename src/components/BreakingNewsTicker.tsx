@@ -13,6 +13,7 @@ interface TickerItem {
 export const BreakingNewsTicker = () => {
   const [tickerItems, setTickerItems] = useState<TickerItem[]>([]);
   const [animationType, setAnimationType] = useState<string>('scroll');
+  const [fontFamily, setFontFamily] = useState<string>('inter');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -71,18 +72,21 @@ export const BreakingNewsTicker = () => {
   }, []);
 
   useEffect(() => {
-    const fetchAnimationType = async () => {
+    const fetchSettings = async () => {
       const { data: settings } = await supabase
         .from("ticker_settings")
-        .select("animation_type")
+        .select("animation_type, font_family")
         .single();
       
       if (settings?.animation_type) {
         setAnimationType(settings.animation_type);
       }
+      if (settings?.font_family) {
+        setFontFamily(settings.font_family);
+      }
     };
     
-    fetchAnimationType();
+    fetchSettings();
   }, []);
 
   if (tickerItems.length === 0) return null;
@@ -98,21 +102,36 @@ export const BreakingNewsTicker = () => {
   const getAnimationClass = () => {
     switch(animationType) {
       case 'scroll':
-        return 'animate-[scroll_20s_linear_infinite]';
+        return 'animate-[scroll_15s_linear_infinite]';
       case 'fade':
         return 'animate-[fade_3s_ease-in-out_infinite]';
       case 'slide':
         return 'animate-[slideUpDown_4s_ease-in-out_infinite]';
       default:
-        return 'animate-[scroll_20s_linear_infinite]';
+        return 'animate-[scroll_15s_linear_infinite]';
+    }
+  };
+
+  const getFontClass = () => {
+    switch(fontFamily) {
+      case 'serif':
+        return 'font-serif';
+      case 'mono':
+        return 'font-mono';
+      case 'playfair':
+        return 'font-playfair';
+      case 'roboto':
+        return 'font-roboto';
+      default:
+        return 'font-sans';
     }
   };
 
   return (
     <div className="bg-gradient-accent text-accent-foreground py-3 overflow-hidden relative">
-      <div className="container mx-auto px-4">
-        <div className={`flex gap-8 ${getAnimationClass()}`}>
-          {tickerItems.concat(tickerItems).map((item, index) => (
+      <div className="w-full">
+        <div className={`flex gap-8 whitespace-nowrap ${getAnimationClass()} ${getFontClass()}`}>
+          {tickerItems.concat(tickerItems).concat(tickerItems).map((item, index) => (
             <span 
               key={`${item.id}-${index}`}
               className={`text-sm whitespace-nowrap ${

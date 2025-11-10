@@ -235,6 +235,7 @@ export type Database = {
           animation_type: string
           created_at: string
           display_mode: string
+          font_family: string
           id: string
           updated_at: string
         }
@@ -242,6 +243,7 @@ export type Database = {
           animation_type?: string
           created_at?: string
           display_mode?: string
+          font_family?: string
           id?: string
           updated_at?: string
         }
@@ -249,6 +251,7 @@ export type Database = {
           animation_type?: string
           created_at?: string
           display_mode?: string
+          font_family?: string
           id?: string
           updated_at?: string
         }

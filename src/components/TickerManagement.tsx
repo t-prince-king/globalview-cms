@@ -20,6 +20,7 @@ interface TickerSettings {
   id: string;
   display_mode: 'breaking_news' | 'custom' | 'both';
   animation_type: 'scroll' | 'fade' | 'slide';
+  font_family: string;
 }
 
 export const TickerManagement = () => {
@@ -100,6 +101,29 @@ export const TickerManagement = () => {
       toast({
         title: "Success",
         description: "Animation updated",
+      });
+    }
+  };
+
+  const handleFontChange = async (font: string) => {
+    if (!settings) return;
+
+    const { error } = await supabase
+      .from("ticker_settings")
+      .update({ font_family: font })
+      .eq("id", settings.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update font",
+        variant: "destructive",
+      });
+    } else {
+      setSettings({ ...settings, font_family: font });
+      toast({
+        title: "Success",
+        description: "Font updated",
       });
     }
   };
@@ -223,6 +247,28 @@ export const TickerManagement = () => {
             </Select>
             <p className="text-sm text-slate-400">
               Choose how the ticker content animates
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="font-style" className="text-slate-200">Font Style</Label>
+            <Select
+              value={settings?.font_family || 'inter'}
+              onValueChange={handleFontChange}
+            >
+              <SelectTrigger id="font-style" className="bg-slate-800 border-slate-700 text-slate-100">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="inter">Inter (Default)</SelectItem>
+                <SelectItem value="serif">Serif</SelectItem>
+                <SelectItem value="mono">Monospace</SelectItem>
+                <SelectItem value="playfair">Playfair Display</SelectItem>
+                <SelectItem value="roboto">Roboto</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-slate-400">
+              Choose the font for ticker text
             </p>
           </div>
         </CardContent>

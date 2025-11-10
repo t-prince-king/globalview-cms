@@ -59,7 +59,7 @@ export const Navigation = () => {
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-3">
-              <img src={logo} alt="GlobalView Times Logo" className="h-10 w-10 md:h-12 md:w-12 object-contain" />
+              <img src={logo} alt="GlobalView Times Logo" className="h-10 w-10 md:h-12 md:w-12 object-cover rounded-full ring-2 ring-primary/20" />
               <div className="flex flex-col">
                 <h1 className="text-2xl md:text-3xl font-serif font-bold text-primary">
                   GlobalView Times
