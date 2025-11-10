@@ -80,11 +80,6 @@ export const Home = () => {
       <BreakingNewsTicker />
 
       <main className="container mx-auto px-4 py-8">
-        {/* Subscription Form */}
-        <section className="mb-12">
-          <SubscriptionForm />
-        </section>
-
         {/* Hero/Featured Carousel */}
         <section className="mb-12">
           {featuredArticles.length > 0 ? (
@@ -185,6 +180,11 @@ export const Home = () => {
             </div>
           </aside>
         </div>
+
+        {/* Subscription Form */}
+        <section className="mt-16">
+          <SubscriptionForm />
+        </section>
       </main>
 
       <Footer />
