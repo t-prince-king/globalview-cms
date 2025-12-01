@@ -13,11 +13,17 @@ import { LogOut, Plus, Edit, Trash2, Home, Upload, X, Image, Video, Type, MoveUp
 import { UserManagement } from "@/components/UserManagement";
 import { TickerManagement } from "@/components/TickerManagement";
 import { SubscriptionManagement } from "@/components/SubscriptionManagement";
+import { NotFoundManagement } from "@/components/NotFoundManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+type ImageSettings = {
+  width?: number;
+  height?: number;
+};
 
 type ContentBlock = 
   | { type: "text"; content: string }
-  | { type: "image"; urls: string[]; layout: "single" | "grid" | "row" }
+  | { type: "image"; urls: string[]; layout: "single" | "grid" | "row"; imageSettings?: { [key: string]: ImageSettings } }
   | { type: "video"; urls: string[] };
 
 interface Article {
@@ -483,11 +489,12 @@ export const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="articles" className="space-y-6">
-          <TabsList className="bg-slate-900 border border-slate-800 grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsList className="bg-slate-900 border border-slate-800 grid w-full grid-cols-3 sm:grid-cols-5">
             <TabsTrigger value="articles">Articles</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="ticker">Ticker</TabsTrigger>
             <TabsTrigger value="subscribers">Subscribers</TabsTrigger>
+            <TabsTrigger value="404page">404 Page</TabsTrigger>
           </TabsList>
 
           <TabsContent value="articles" className="space-y-6">
@@ -744,20 +751,71 @@ export const Admin = () => {
                             
                             {block.urls.length > 0 && (
                               <div className={`grid gap-3 ${block.layout === "grid" ? "grid-cols-2" : block.layout === "row" ? "grid-cols-3" : "grid-cols-1"}`}>
-                                {block.urls.map((url, urlIndex) => (
-                                  <div key={urlIndex} className="relative group">
-                                    <img src={url} alt="" className="w-full h-32 object-cover rounded-lg" />
-                                    <Button
-                                      type="button"
-                                      variant="destructive"
-                                      size="sm"
-                                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                      onClick={() => removeMediaFromBlock(blockIndex, urlIndex)}
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                ))}
+                                {block.urls.map((url, urlIndex) => {
+                                  const imageSettings = block.imageSettings?.[url] || {};
+                                  return (
+                                    <div key={urlIndex} className="relative group space-y-2">
+                                      <img 
+                                        src={url} 
+                                        alt="" 
+                                        className="w-full h-32 object-cover rounded-lg" 
+                                        style={{
+                                          maxWidth: imageSettings.width ? `${imageSettings.width}px` : undefined,
+                                          maxHeight: imageSettings.height ? `${imageSettings.height}px` : undefined,
+                                        }}
+                                      />
+                                      <div className="flex gap-2 items-center">
+                                        <div className="flex-1">
+                                          <Label className="text-xs text-slate-400">Width (px)</Label>
+                                          <Input
+                                            type="number"
+                                            placeholder="Auto"
+                                            value={imageSettings.width || ""}
+                                            onChange={(e) => {
+                                              const newSettings = {
+                                                ...block.imageSettings,
+                                                [url]: {
+                                                  ...imageSettings,
+                                                  width: e.target.value ? parseInt(e.target.value) : undefined,
+                                                },
+                                              };
+                                              updateBlock(blockIndex, { imageSettings: newSettings });
+                                            }}
+                                            className="bg-slate-900 border-slate-700 text-slate-100 h-8 text-xs"
+                                          />
+                                        </div>
+                                        <div className="flex-1">
+                                          <Label className="text-xs text-slate-400">Height (px)</Label>
+                                          <Input
+                                            type="number"
+                                            placeholder="Auto"
+                                            value={imageSettings.height || ""}
+                                            onChange={(e) => {
+                                              const newSettings = {
+                                                ...block.imageSettings,
+                                                [url]: {
+                                                  ...imageSettings,
+                                                  height: e.target.value ? parseInt(e.target.value) : undefined,
+                                                },
+                                              };
+                                              updateBlock(blockIndex, { imageSettings: newSettings });
+                                            }}
+                                            className="bg-slate-900 border-slate-700 text-slate-100 h-8 text-xs"
+                                          />
+                                        </div>
+                                        <Button
+                                          type="button"
+                                          variant="destructive"
+                                          size="sm"
+                                          className="mt-4"
+                                          onClick={() => removeMediaFromBlock(blockIndex, urlIndex)}
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
@@ -964,6 +1022,10 @@ export const Admin = () => {
 
           <TabsContent value="subscribers">
             <SubscriptionManagement />
+          </TabsContent>
+
+          <TabsContent value="404page">
+            <NotFoundManagement />
           </TabsContent>
         </Tabs>
       </main>
