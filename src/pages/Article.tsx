@@ -16,9 +16,14 @@ import { Helmet } from "react-helmet";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 
+type ImageSettings = {
+  width?: number;
+  height?: number;
+};
+
 type ContentBlock = 
   | { type: "text"; content: string }
-  | { type: "image"; urls: string[]; layout: "single" | "grid" | "row" }
+  | { type: "image"; urls: string[]; layout: "single" | "grid" | "row"; imageSettings?: { [key: string]: ImageSettings } }
   | { type: "video"; urls: string[] };
 
 interface ArticleData {
@@ -192,7 +197,24 @@ export const Article = () => {
                         ? "grid grid-cols-3 gap-4"
                         : "space-y-6"
                     }`}>
-                      <ImageViewer images={block.urls} />
+                      {block.urls.map((url, imgIndex) => {
+                        const settings = block.imageSettings?.[url] || {};
+                        return (
+                          <img
+                            key={imgIndex}
+                            src={url}
+                            alt=""
+                            className="rounded-lg cursor-pointer hover:opacity-90 transition-opacity mx-auto"
+                            style={{
+                              width: settings.width ? `${settings.width}px` : '100%',
+                              height: settings.height ? `${settings.height}px` : 'auto',
+                              maxWidth: '100%',
+                              objectFit: 'cover',
+                            }}
+                            onClick={() => window.open(url, '_blank')}
+                          />
+                        );
+                      })}
                     </div>
                   )}
                   

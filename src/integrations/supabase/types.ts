@@ -182,6 +182,51 @@ export type Database = {
         }
         Relationships: []
       }
+      page_settings: {
+        Row: {
+          ad_content: string | null
+          button_link: string | null
+          button_text: string | null
+          content: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          page_type: string
+          show_ads: boolean | null
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ad_content?: string | null
+          button_link?: string | null
+          button_text?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          page_type?: string
+          show_ads?: boolean | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          ad_content?: string | null
+          button_link?: string | null
+          button_text?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          page_type?: string
+          show_ads?: boolean | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
