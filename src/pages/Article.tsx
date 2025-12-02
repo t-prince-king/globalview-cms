@@ -6,8 +6,9 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { ArticleEngagement } from "@/components/ArticleEngagement";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useArticle, useRelatedArticles } from "@/hooks/useArticles";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { Share2, Facebook, Twitter } from "lucide-react";
 import { Helmet } from "react-helmet";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ImageSettings = {
   width?: number;
@@ -26,99 +28,112 @@ type ContentBlock =
   | { type: "image"; urls: string[]; layout: "single" | "grid" | "row"; imageSettings?: { [key: string]: ImageSettings } }
   | { type: "video"; urls: string[] };
 
-interface ArticleData {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  content: string;
-  content_blocks?: ContentBlock[];
-  image_url: string | null;
-  images: string[];
-  videos: string[];
-  category: string;
-  author: string;
-  published_at: string;
-  tags: string[];
-  views: number;
-}
+// Memoized article card
+const MemoizedArticleCard = memo(ArticleCard);
+
+// Loading skeleton
+const ArticleLoadingSkeleton = () => (
+  <div className="min-h-screen bg-background">
+    <Navigation />
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        <Skeleton className="h-8 w-24 mb-4" />
+        <Skeleton className="h-12 w-full mb-4" />
+        <Skeleton className="h-6 w-48 mx-auto mb-8" />
+        <Skeleton className="h-96 w-full mb-8" />
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 export const Article = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [article, setArticle] = useState<ArticleData | null>(null);
-  const [relatedArticles, setRelatedArticles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [readingProgress, setReadingProgress] = useState(0);
+  const [viewIncremented, setViewIncremented] = useState(false);
 
+  // Use React Query for caching
+  const { data: articleData, isLoading } = useArticle(slug || "");
+  
+  // Transform content_blocks to proper type
+  const article = articleData ? {
+    ...articleData,
+    content_blocks: articleData.content_blocks as ContentBlock[] | undefined,
+    images: articleData.images || [],
+    videos: articleData.videos || [],
+    tags: articleData.tags || [],
+  } : null;
+
+  // Fetch related articles only when we have the article
+  const { data: relatedArticles = [] } = useRelatedArticles(
+    article?.category || "",
+    article?.id || "",
+    3
+  );
+
+  // Increment view count once per page load
   useEffect(() => {
-    const fetchArticle = async () => {
-      if (!slug) return;
-
-      setLoading(true);
-      const { data, error } = await supabase
+    if (article && !viewIncremented) {
+      setViewIncremented(true);
+      // Fire and forget - don't wait for this
+      supabase
         .from("articles")
-        .select("*")
-        .eq("slug", slug)
-        .maybeSingle();
+        .update({ views: (article.views || 0) + 1 })
+        .eq("id", article.id)
+        .then(() => {});
+    }
+  }, [article, viewIncremented]);
 
-      if (error) {
-        console.error("Error fetching article:", error);
-      }
-
-      if (data) {
-        setArticle({
-          ...data,
-          content_blocks: data.content_blocks as ContentBlock[] | undefined
-        });
-
-        // Increment view count
-        await supabase
-          .from("articles")
-          .update({ views: data.views + 1 })
-          .eq("id", data.id);
-
-        // Fetch related articles
-        const { data: related } = await supabase
-          .from("articles")
-          .select("*")
-          .eq("category", data.category)
-          .neq("id", data.id)
-          .limit(3);
-
-        if (related) {
-          setRelatedArticles(related);
-        }
-      }
-      setLoading(false);
-    };
-
-    fetchArticle();
+  // Reset view increment when slug changes
+  useEffect(() => {
+    setViewIncremented(false);
   }, [slug]);
 
+  // Optimized scroll handler with throttling
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-      const scrollTop = window.scrollY;
-      const progress = (scrollTop / (documentHeight - windowHeight)) * 100;
-      setReadingProgress(Math.min(progress, 100));
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const windowHeight = window.innerHeight;
+          const documentHeight = document.documentElement.scrollHeight;
+          const scrollTop = window.scrollY;
+          const progress = (scrollTop / (documentHeight - windowHeight)) * 100;
+          setReadingProgress(Math.min(progress, 100));
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const shareUrl = window.location.href;
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="container mx-auto px-4 py-8">
-          <p className="text-muted-foreground">Loading article...</p>
-        </div>
-      </div>
-    );
+  const handleShare = useCallback(() => {
+    navigator.clipboard.writeText(shareUrl);
+    toast.success("Link copied to clipboard!");
+  }, [shareUrl]);
+
+  const handleFacebookShare = useCallback(() => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, "_blank");
+  }, [shareUrl]);
+
+  const handleTwitterShare = useCallback(() => {
+    if (article) {
+      window.open(`https://twitter.com/intent/tweet?url=${shareUrl}&text=${article.title}`, "_blank");
+    }
+  }, [shareUrl, article]);
+
+  if (isLoading) {
+    return <ArticleLoadingSkeleton />;
   }
 
   if (!article) {
@@ -142,13 +157,13 @@ export const Article = () => {
         <meta property="og:description" content={article.description} />
         <meta property="og:image" content={article.images?.[0] || article.image_url || ""} />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content={window.location.href} />
+        <meta property="og:url" content={shareUrl} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={article.description} />
         <meta name="twitter:image" content={article.images?.[0] || article.image_url || ""} />
         <meta name="author" content={article.author} />
-        <link rel="canonical" href={window.location.href} />
+        <link rel="canonical" href={shareUrl} />
       </Helmet>
       
       <div className="fixed top-0 left-0 right-0 z-50">
@@ -171,7 +186,7 @@ export const Article = () => {
           <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground mb-8">
             <span>By {article.author}</span>
             <span>•</span>
-            <span>{format(new Date(article.published_at), "MMMM d, yyyy")}</span>
+            <span>{format(new Date(article.published_at || new Date()), "MMMM d, yyyy")}</span>
           </div>
 
           {/* Display content blocks if available */}
@@ -204,6 +219,8 @@ export const Article = () => {
                             key={imgIndex}
                             src={url}
                             alt=""
+                            loading="lazy"
+                            decoding="async"
                             className="rounded-lg cursor-pointer hover:opacity-90 transition-opacity mx-auto"
                             style={{
                               width: settings.width ? `${settings.width}px` : '100%',
@@ -259,10 +276,7 @@ export const Article = () => {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => {
-                navigator.clipboard.writeText(shareUrl);
-                toast.success("Link copied to clipboard!");
-              }}
+              onClick={handleShare}
             >
               <Share2 className="h-4 w-4 mr-2" />
               Share
@@ -270,12 +284,7 @@ export const Article = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                window.open(
-                  `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
-                  "_blank"
-                )
-              }
+              onClick={handleFacebookShare}
             >
               <Facebook className="h-4 w-4 mr-2" />
               Facebook
@@ -283,12 +292,7 @@ export const Article = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                window.open(
-                  `https://twitter.com/intent/tweet?url=${shareUrl}&text=${article.title}`,
-                  "_blank"
-                )
-              }
+              onClick={handleTwitterShare}
             >
               <Twitter className="h-4 w-4 mr-2" />
               Twitter
@@ -314,11 +318,11 @@ export const Article = () => {
                 Related Articles
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {relatedArticles.map((related) => (
-                  <ArticleCard
+              {relatedArticles.map((related) => (
+                  <MemoizedArticleCard
                     key={related.id}
                     {...related}
-                    imageUrl={related.images?.[0] || related.image_url || undefined}
+                    imageUrl={related.image_url || undefined}
                   />
                 ))}
               </div>
