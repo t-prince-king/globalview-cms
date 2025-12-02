@@ -3,8 +3,9 @@ import { BreakingNewsTicker } from "@/components/BreakingNewsTicker";
 import { ArticleCard } from "@/components/ArticleCard";
 import { Footer } from "@/components/Footer";
 import { SubscriptionForm } from "@/components/SubscriptionForm";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useFeaturedArticles, usePopularArticles, useEditorsPickArticles } from "@/hooks/useArticles";
 import heroImage from "@/assets/hero-global.jpg";
 import {
   Carousel,
@@ -14,84 +15,61 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface Article {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  image_url: string | null;
-  category: string;
-  published_at: string;
-  is_featured: boolean;
-  is_editors_pick: boolean;
-  views: number;
-}
+// Memoized article card to prevent unnecessary re-renders
+const MemoizedArticleCard = memo(ArticleCard);
+
+// Loading skeleton for articles
+const ArticleSkeleton = ({ size = "medium" }: { size?: "small" | "medium" | "large" }) => (
+  <div className={`rounded-lg overflow-hidden ${size === "large" ? "h-96" : size === "small" ? "h-24" : "h-64"}`}>
+    <Skeleton className="w-full h-full" />
+  </div>
+);
 
 export const Home = () => {
-  const [featuredArticles, setFeaturedArticles] = useState<Article[]>([]);
-  const [trendingArticles, setTrendingArticles] = useState<Article[]>([]);
-  const [editorsPicks, setEditorsPicks] = useState<Article[]>([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(true);
 
+  // Use React Query hooks with caching - these are automatically cached and deduplicated
+  const { data: featuredArticles = [], isLoading: featuredLoading } = useFeaturedArticles(5);
+  const { data: trendingArticles = [], isLoading: trendingLoading } = usePopularArticles(5);
+  const { data: editorsPicks = [], isLoading: editorsLoading } = useEditorsPickArticles(6);
+
+  // Memoize autoplay plugin to prevent recreation on each render
+  const autoplayPlugin = useMemo(() => Autoplay({ delay: 5000 }), []);
+
   useEffect(() => {
-    const fetchArticles = async () => {
-      // Featured articles (multiple for carousel)
-      const { data: featured } = await supabase
-        .from("articles")
-        .select("*")
-        .eq("is_featured", true)
-        .order("published_at", { ascending: false })
-        .limit(5);
-
-      if (featured) {
-        setFeaturedArticles(featured);
-      }
-
-      // Trending articles (most viewed)
-      const { data: trending } = await supabase
-        .from("articles")
-        .select("*")
-        .order("views", { ascending: false })
-        .limit(5);
-
-      if (trending) {
-        setTrendingArticles(trending);
-      }
-
-      // Editor's picks
-      const { data: picks } = await supabase
-        .from("articles")
-        .select("*")
-        .eq("is_editors_pick", true)
-        .order("published_at", { ascending: false })
-        .limit(6);
-
-      if (picks) {
-        setEditorsPicks(picks);
-      }
-    };
-
+    let isMounted = true;
+    
     const checkSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        const { data } = await supabase
-          .from("subscriptions")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("is_active", true)
-          .maybeSingle();
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
         
-        setIsSubscribed(!!data);
+        if (user && isMounted) {
+          const { data } = await supabase
+            .from("subscriptions")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("is_active", true)
+            .maybeSingle();
+          
+          if (isMounted) {
+            setIsSubscribed(!!data);
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setCheckingSubscription(false);
+        }
       }
-      
-      setCheckingSubscription(false);
     };
 
-    fetchArticles();
     checkSubscription();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -102,23 +80,21 @@ export const Home = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Hero/Featured Carousel */}
         <section className="mb-12">
-          {featuredArticles.length > 0 ? (
+          {featuredLoading ? (
+            <ArticleSkeleton size="large" />
+          ) : featuredArticles.length > 0 ? (
             <Carousel
               opts={{
                 align: "start",
                 loop: true,
               }}
-              plugins={[
-                Autoplay({
-                  delay: 5000,
-                }),
-              ]}
+              plugins={[autoplayPlugin]}
               className="w-full"
             >
               <CarouselContent>
                 {featuredArticles.map((article) => (
                   <CarouselItem key={article.id}>
-                    <ArticleCard
+                    <MemoizedArticleCard
                       {...article}
                       imageUrl={article.image_url || heroImage}
                       size="large"
@@ -135,6 +111,7 @@ export const Home = () => {
                 src={heroImage}
                 alt="Global News"
                 className="w-full h-full object-cover"
+                loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -158,9 +135,16 @@ export const Home = () => {
                 Editor's Picks
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {editorsPicks.length > 0 ? (
+                {editorsLoading ? (
+                  <>
+                    <ArticleSkeleton />
+                    <ArticleSkeleton />
+                    <ArticleSkeleton />
+                    <ArticleSkeleton />
+                  </>
+                ) : editorsPicks.length > 0 ? (
                   editorsPicks.map((article) => (
-                    <ArticleCard
+                    <MemoizedArticleCard
                       key={article.id}
                       {...article}
                       imageUrl={article.image_url || undefined}
@@ -182,9 +166,15 @@ export const Home = () => {
                 Trending Now
               </h3>
               <div className="space-y-4">
-                {trendingArticles.length > 0 ? (
+                {trendingLoading ? (
+                  <>
+                    <ArticleSkeleton size="small" />
+                    <ArticleSkeleton size="small" />
+                    <ArticleSkeleton size="small" />
+                  </>
+                ) : trendingArticles.length > 0 ? (
                   trendingArticles.map((article) => (
-                    <ArticleCard
+                    <MemoizedArticleCard
                       key={article.id}
                       {...article}
                       imageUrl={article.image_url || undefined}

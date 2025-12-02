@@ -1,5 +1,13 @@
-// Service Worker for caching and offline support
-const CACHE_NAME = 'globalview-v1';
+// Service Worker for caching and offline support - Optimized for high traffic
+const CACHE_VERSION = 'v2';
+const STATIC_CACHE = `globalview-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `globalview-dynamic-${CACHE_VERSION}`;
+const IMAGE_CACHE = `globalview-images-${CACHE_VERSION}`;
+
+// Max items in dynamic cache to prevent memory bloat
+const MAX_DYNAMIC_CACHE_SIZE = 50;
+const MAX_IMAGE_CACHE_SIZE = 100;
+
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -9,7 +17,7 @@ const STATIC_ASSETS = [
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
+    caches.open(STATIC_CACHE).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
     })
   );
@@ -22,7 +30,12 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME)
+          .filter((name) => {
+            return name.startsWith('globalview-') && 
+                   name !== STATIC_CACHE && 
+                   name !== DYNAMIC_CACHE && 
+                   name !== IMAGE_CACHE;
+          })
           .map((name) => caches.delete(name))
       );
     })
@@ -30,7 +43,20 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Trim cache to prevent memory bloat
+const trimCache = async (cacheName, maxItems) => {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length > maxItems) {
+    // Delete oldest items (FIFO)
+    const deleteCount = keys.length - maxItems;
+    for (let i = 0; i < deleteCount; i++) {
+      await cache.delete(keys[i]);
+    }
+  }
+};
+
+// Fetch event - smart caching strategies
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -38,25 +64,89 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (request.method !== 'GET') return;
 
-  // Skip API calls and Supabase requests
+  // Skip API calls and Supabase requests - always fetch fresh
   if (url.pathname.includes('/rest/') || 
       url.pathname.includes('/auth/') ||
+      url.pathname.includes('/storage/') ||
       url.hostname.includes('supabase')) {
     return;
   }
 
-  // Cache-first strategy for static assets
-  if (request.destination === 'image' || 
-      request.destination === 'style' || 
+  // Skip chrome-extension and other non-http protocols
+  if (!url.protocol.startsWith('http')) return;
+
+  // Image caching - cache-first with background refresh
+  if (request.destination === 'image') {
+    event.respondWith(
+      caches.open(IMAGE_CACHE).then(async (cache) => {
+        const cached = await cache.match(request);
+        
+        // Return cached immediately if available
+        if (cached) {
+          // Background refresh for stale images (older than 1 hour)
+          const cacheDate = cached.headers.get('sw-cache-date');
+          const isStale = cacheDate && (Date.now() - parseInt(cacheDate)) > 3600000;
+          
+          if (isStale) {
+            fetch(request).then((response) => {
+              if (response.ok) {
+                const clonedResponse = response.clone();
+                const headers = new Headers(clonedResponse.headers);
+                headers.set('sw-cache-date', Date.now().toString());
+                
+                clonedResponse.blob().then((blob) => {
+                  cache.put(request, new Response(blob, {
+                    status: clonedResponse.status,
+                    statusText: clonedResponse.statusText,
+                    headers: headers,
+                  }));
+                });
+              }
+            }).catch(() => {});
+          }
+          
+          return cached;
+        }
+        
+        // Fetch and cache new images
+        try {
+          const response = await fetch(request);
+          if (response.ok) {
+            const clonedResponse = response.clone();
+            const headers = new Headers(clonedResponse.headers);
+            headers.set('sw-cache-date', Date.now().toString());
+            
+            clonedResponse.blob().then((blob) => {
+              cache.put(request, new Response(blob, {
+                status: clonedResponse.status,
+                statusText: clonedResponse.statusText,
+                headers: headers,
+              }));
+              trimCache(IMAGE_CACHE, MAX_IMAGE_CACHE_SIZE);
+            });
+          }
+          return response;
+        } catch (error) {
+          // Return placeholder or cached version if offline
+          return cached || new Response('', { status: 404 });
+        }
+      })
+    );
+    return;
+  }
+
+  // Static assets - cache-first
+  if (request.destination === 'style' || 
       request.destination === 'script' ||
       request.destination === 'font') {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
+        
         return fetch(request).then((response) => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
+            caches.open(STATIC_CACHE).then((cache) => {
               cache.put(request, clone);
             });
           }
@@ -67,18 +157,56 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first strategy for HTML pages
+  // HTML pages - stale-while-revalidate for fast navigation
+  if (request.destination === 'document' || request.mode === 'navigate') {
+    event.respondWith(
+      caches.open(DYNAMIC_CACHE).then(async (cache) => {
+        const cached = await cache.match(request);
+        
+        const fetchPromise = fetch(request).then((response) => {
+          if (response.ok) {
+            cache.put(request, response.clone());
+            trimCache(DYNAMIC_CACHE, MAX_DYNAMIC_CACHE_SIZE);
+          }
+          return response;
+        }).catch(() => {
+          // Return cached version if offline
+          return cached || caches.match('/index.html');
+        });
+        
+        // Return cached immediately, update in background
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // Default - network-first with cache fallback
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response.ok && request.destination === 'document') {
+        if (response.ok) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
+          caches.open(DYNAMIC_CACHE).then((cache) => {
             cache.put(request, clone);
+            trimCache(DYNAMIC_CACHE, MAX_DYNAMIC_CACHE_SIZE);
           });
         }
         return response;
       })
       .catch(() => caches.match(request))
   );
+});
+
+// Handle messages from main thread
+self.addEventListener('message', (event) => {
+  if (event.data === 'skipWaiting') {
+    self.skipWaiting();
+  }
+  
+  if (event.data === 'clearCache') {
+    caches.keys().then((names) => {
+      names.forEach((name) => caches.delete(name));
+    });
+  }
 });

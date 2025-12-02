@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { usePrefetchArticle } from "@/hooks/useArticles";
+import { memo, useCallback, useState } from "react";
 
 interface ArticleCardProps {
   id: string;
@@ -14,7 +16,8 @@ interface ArticleCardProps {
   isFeatured?: boolean;
 }
 
-export const ArticleCard = ({
+// Memoized component to prevent unnecessary re-renders
+export const ArticleCard = memo(({
   title,
   slug,
   description,
@@ -24,20 +27,39 @@ export const ArticleCard = ({
   size = "medium",
   isFeatured = false,
 }: ArticleCardProps) => {
+  const prefetchArticle = usePrefetchArticle();
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
   const formattedDate = format(new Date(published_at), "MMMM d, yyyy");
+
+  // Prefetch article data on hover for instant navigation
+  const handleMouseEnter = useCallback(() => {
+    prefetchArticle(slug);
+  }, [prefetchArticle, slug]);
+
+  const handleImageLoad = useCallback(() => {
+    setImageLoaded(true);
+  }, []);
 
   if (size === "large") {
     return (
       <Link
         to={`/article/${slug}`}
         className="group block overflow-hidden rounded-lg shadow-article hover:shadow-hover transition-all duration-300"
+        onMouseEnter={handleMouseEnter}
+        onFocus={handleMouseEnter}
       >
-        <div className="relative h-96 overflow-hidden">
+        <div className="relative h-96 overflow-hidden bg-muted">
           {imageUrl && (
             <img
               src={imageUrl}
               alt={title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="eager"
+              decoding="async"
+              onLoad={handleImageLoad}
+              className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+                imageLoaded ? "opacity-100" : "opacity-0"
+              }`}
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
@@ -61,13 +83,20 @@ export const ArticleCard = ({
       <Link
         to={`/article/${slug}`}
         className="group flex gap-4 hover:bg-news-hover p-3 rounded-lg transition-all duration-300"
+        onMouseEnter={handleMouseEnter}
+        onFocus={handleMouseEnter}
       >
         {imageUrl && (
-          <div className="relative w-32 h-24 flex-shrink-0 overflow-hidden rounded-lg">
+          <div className="relative w-32 h-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
             <img
               src={imageUrl}
               alt={title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              loading="lazy"
+              decoding="async"
+              onLoad={handleImageLoad}
+              className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 ${
+                imageLoaded ? "opacity-100" : "opacity-0"
+              }`}
             />
           </div>
         )}
@@ -85,13 +114,20 @@ export const ArticleCard = ({
     <Link
       to={`/article/${slug}`}
       className="group block overflow-hidden rounded-xl shadow-article hover:shadow-hover transition-all duration-300 bg-card"
+      onMouseEnter={handleMouseEnter}
+      onFocus={handleMouseEnter}
     >
       {imageUrl ? (
-        <div className="relative h-56 overflow-hidden">
+        <div className="relative h-56 overflow-hidden bg-muted">
           <img
             src={imageUrl}
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            loading="lazy"
+            decoding="async"
+            onLoad={handleImageLoad}
+            className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${
+              imageLoaded ? "opacity-100" : "opacity-0"
+            }`}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
@@ -114,4 +150,6 @@ export const ArticleCard = ({
       </div>
     </Link>
   );
-};
+});
+
+ArticleCard.displayName = "ArticleCard";
