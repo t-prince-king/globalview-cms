@@ -1,1 +1,10 @@
 project_id = "wwfoepbvkcsrlsstniix"
+
+[functions.sitemap]
+verify_jwt = false
+
+[functions.rss]
+verify_jwt = false
+
+[functions.send-notification-email]
+verify_jwt = false

@@ -1,6 +1,7 @@
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ArticleCard } from "@/components/ArticleCard";
+import { SEOHead } from "@/components/SEOHead";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,13 @@ export const Search = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={query ? `Search: ${query} - GlobalView Times` : "Search Articles - GlobalView Times"}
+        description="Search for articles across World, Politics, Technology, Business, Sports, Entertainment, and Lifestyle news on GlobalView Times."
+        canonical={typeof window !== 'undefined' ? window.location.href : ''}
+        noindex={true}
+      />
+      
       <Navigation />
 
       <main className="container mx-auto px-4 py-8">

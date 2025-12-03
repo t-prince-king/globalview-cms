@@ -5,6 +5,9 @@ import { ImageViewer } from "@/components/ImageViewer";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { ArticleEngagement } from "@/components/ArticleEngagement";
 import { BookmarkButton } from "@/components/BookmarkButton";
+import { InternalLinks } from "@/components/InternalLinks";
+import { SEOHead } from "@/components/SEOHead";
+import { ArticleStructuredData, BreadcrumbStructuredData } from "@/components/ArticleStructuredData";
 import { useParams } from "react-router-dom";
 import { useEffect, useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,10 +16,10 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Share2, Facebook, Twitter } from "lucide-react";
-import { Helmet } from "react-helmet";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { calculateWordCount, generateImageAlt, formatDateISO } from "@/utils/seo";
 
 type ImageSettings = {
   width?: number;
@@ -147,24 +150,46 @@ export const Article = () => {
     );
   }
 
+  const articleImage = article.images?.[0] || article.image_url || "";
+  const wordCount = calculateWordCount(article.content);
+  const breadcrumbs = [
+    { name: "Home", url: "/" },
+    { name: article.category.charAt(0).toUpperCase() + article.category.slice(1), url: `/category/${article.category}` },
+    { name: article.title.substring(0, 50), url: `/article/${article.slug}` },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>{article.title} - GlobalView News</title>
-        <meta name="description" content={article.description} />
-        <meta name="keywords" content={article.tags.join(", ")} />
-        <meta property="og:title" content={article.title} />
-        <meta property="og:description" content={article.description} />
-        <meta property="og:image" content={article.images?.[0] || article.image_url || ""} />
-        <meta property="og:type" content="article" />
-        <meta property="og:url" content={shareUrl} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={article.title} />
-        <meta name="twitter:description" content={article.description} />
-        <meta name="twitter:image" content={article.images?.[0] || article.image_url || ""} />
-        <meta name="author" content={article.author} />
-        <link rel="canonical" href={shareUrl} />
-      </Helmet>
+      {/* SEO Meta Tags */}
+      <SEOHead
+        title={article.title}
+        description={article.description}
+        canonical={shareUrl}
+        image={articleImage}
+        type="article"
+        publishedTime={formatDateISO(article.published_at || new Date())}
+        modifiedTime={formatDateISO(article.updated_at || article.published_at || new Date())}
+        author={article.author}
+        section={article.category}
+        tags={article.tags}
+      />
+      
+      {/* Structured Data for Google */}
+      <ArticleStructuredData
+        headline={article.title}
+        description={article.description}
+        image={articleImage}
+        author={article.author}
+        datePublished={formatDateISO(article.published_at || new Date())}
+        dateModified={formatDateISO(article.updated_at || article.published_at || new Date())}
+        articleSection={article.category}
+        keywords={article.tags}
+        url={shareUrl}
+        wordCount={wordCount}
+      />
+      
+      {/* Breadcrumb Structured Data */}
+      <BreadcrumbStructuredData items={breadcrumbs} />
       
       <div className="fixed top-0 left-0 right-0 z-50">
         <Progress value={readingProgress} className="h-1 rounded-none" />
@@ -172,22 +197,46 @@ export const Article = () => {
       
       <Navigation />
 
-      <div className="container mx-auto px-4 py-8">
-        <article className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <Badge>{article.category}</Badge>
-            <BookmarkButton articleId={article.id} />
-          </div>
+      <main className="container mx-auto px-4 py-8">
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="max-w-4xl mx-auto mb-6">
+          <ol className="flex items-center space-x-2 text-sm text-muted-foreground">
+            {breadcrumbs.map((crumb, index) => (
+              <li key={crumb.url} className="flex items-center">
+                {index > 0 && <span className="mx-2">/</span>}
+                {index === breadcrumbs.length - 1 ? (
+                  <span className="text-foreground truncate max-w-[200px]">{crumb.name}</span>
+                ) : (
+                  <a href={crumb.url} className="hover:text-primary transition-colors">
+                    {crumb.name}
+                  </a>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
 
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 text-center">
-            {article.title}
-          </h1>
+        <article itemScope itemType="https://schema.org/NewsArticle" className="max-w-4xl mx-auto">
+          <header>
+            <div className="flex items-center justify-between mb-4">
+              <Badge>{article.category}</Badge>
+              <BookmarkButton articleId={article.id} />
+            </div>
 
-          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground mb-8">
-            <span>By {article.author}</span>
-            <span>•</span>
-            <span>{format(new Date(article.published_at || new Date()), "MMMM d, yyyy")}</span>
-          </div>
+            <h1 itemProp="headline" className="text-4xl md:text-5xl font-serif font-bold mb-4 text-center">
+              {article.title}
+            </h1>
+
+            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground mb-8">
+              <span itemProp="author" itemScope itemType="https://schema.org/Person">
+                By <span itemProp="name">{article.author}</span>
+              </span>
+              <span>•</span>
+              <time itemProp="datePublished" dateTime={formatDateISO(article.published_at || new Date())}>
+                {format(new Date(article.published_at || new Date()), "MMMM d, yyyy")}
+              </time>
+            </div>
+          </header>
 
           {/* Display content blocks if available */}
           {article.content_blocks && article.content_blocks.length > 0 ? (
@@ -329,7 +378,13 @@ export const Article = () => {
             </section>
           )}
         </article>
-      </div>
+        
+        {/* Internal Links for SEO */}
+        <InternalLinks 
+          articles={relatedArticles.map(a => ({ id: a.id, title: a.title, slug: a.slug, category: a.category }))} 
+          currentCategory={article.category} 
+        />
+      </main>
 
       <Footer />
     </div>
