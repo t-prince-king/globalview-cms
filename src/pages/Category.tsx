@@ -1,6 +1,8 @@
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { ArticleCard } from "@/components/ArticleCard";
+import { SEOHead } from "@/components/SEOHead";
+import { BreadcrumbStructuredData } from "@/components/ArticleStructuredData";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,11 +59,42 @@ export const Category = () => {
   const endIndex = startIndex + articlesPerPage;
   const currentArticles = articles.slice(startIndex, endIndex);
 
+  const categoryTitle = category ? category.charAt(0).toUpperCase() + category.slice(1) : "";
+  const breadcrumbs = [
+    { name: "Home", url: "/" },
+    { name: categoryTitle, url: `/category/${category}` },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={`${categoryTitle} News - GlobalView Times`}
+        description={`Latest ${categoryTitle.toLowerCase()} news and updates. Read in-depth coverage and analysis from GlobalView Times.`}
+        canonical={typeof window !== 'undefined' ? window.location.href : ''}
+      />
+      <BreadcrumbStructuredData items={breadcrumbs} />
+      
       <Navigation />
 
       <main className="container mx-auto px-4 py-8">
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="mb-6">
+          <ol className="flex items-center space-x-2 text-sm text-muted-foreground">
+            {breadcrumbs.map((crumb, index) => (
+              <li key={crumb.url} className="flex items-center">
+                {index > 0 && <span className="mx-2">/</span>}
+                {index === breadcrumbs.length - 1 ? (
+                  <span className="text-foreground">{crumb.name}</span>
+                ) : (
+                  <a href={crumb.url} className="hover:text-primary transition-colors">
+                    {crumb.name}
+                  </a>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+
         <h1 className="text-4xl font-serif font-bold mb-8 capitalize">
           {category} News
         </h1>

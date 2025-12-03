@@ -1,5 +1,6 @@
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
+import { SEOHead } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +18,11 @@ export const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Contact Us - GlobalView Times"
+        description="Get in touch with GlobalView Times. Send us your questions, feedback, or news tips. We'd love to hear from you."
+        canonical={typeof window !== 'undefined' ? window.location.href : ''}
+      />
       <Navigation />
       <main className="container mx-auto px-4 py-12 max-w-2xl">
         <h1 className="text-4xl font-serif font-bold mb-6">Contact Us</h1>

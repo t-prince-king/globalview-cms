@@ -3,6 +3,8 @@ import { BreakingNewsTicker } from "@/components/BreakingNewsTicker";
 import { ArticleCard } from "@/components/ArticleCard";
 import { Footer } from "@/components/Footer";
 import { SubscriptionForm } from "@/components/SubscriptionForm";
+import { SEOHead } from "@/components/SEOHead";
+import { WebsiteStructuredData } from "@/components/ArticleStructuredData";
 import { useEffect, useState, memo, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeaturedArticles, usePopularArticles, useEditorsPickArticles } from "@/hooks/useArticles";
@@ -74,6 +76,14 @@ export const Home = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* SEO Head */}
+      <SEOHead
+        title="GlobalView Times - See the World, One Story at a Time"
+        description="Your premier source for global news coverage. Breaking news, in-depth analysis, and comprehensive reporting on World, Politics, Technology, Business, Sports, Entertainment, and Lifestyle."
+        canonical={typeof window !== 'undefined' ? window.location.origin : ''}
+      />
+      <WebsiteStructuredData />
+      
       <Navigation />
       <BreakingNewsTicker />
 
