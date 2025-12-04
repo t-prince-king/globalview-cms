@@ -6,12 +6,14 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { ArticleEngagement } from "@/components/ArticleEngagement";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { InternalLinks } from "@/components/InternalLinks";
+import { ArticleUpdates } from "@/components/ArticleUpdates";
 import { SEOHead } from "@/components/SEOHead";
 import { ArticleStructuredData, BreadcrumbStructuredData } from "@/components/ArticleStructuredData";
 import { useParams } from "react-router-dom";
 import { useEffect, useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useArticle, useRelatedArticles } from "@/hooks/useArticles";
+import { useArticleUpdates } from "@/hooks/useArticleUpdates";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,6 +79,9 @@ export const Article = () => {
     article?.id || "",
     6
   );
+
+  // Fetch article updates
+  const { data: articleUpdates = [] } = useArticleUpdates(article?.id || "");
 
   // Increment view count once per page load
   useEffect(() => {
@@ -360,6 +365,9 @@ export const Article = () => {
 
           {/* Likes and Comments */}
           <ArticleEngagement articleId={article.id} />
+
+          {/* Article Updates / Revisions */}
+          <ArticleUpdates updates={articleUpdates} />
 
           {relatedArticles.length > 0 && (
             <section className="mt-16 pt-8 border-t">
