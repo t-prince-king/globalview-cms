@@ -20,10 +20,10 @@ serve(async (req) => {
     const url = new URL(req.url);
     const baseUrl = url.searchParams.get("baseUrl") || "https://globalviewtimes.com";
 
-    // Fetch all published articles
+    // Fetch all published articles with images
     const { data: articles, error } = await supabase
       .from("articles")
-      .select("slug, updated_at, published_at, category")
+      .select("slug, title, description, updated_at, published_at, category, image_url, images")
       .order("published_at", { ascending: false });
 
     if (error) throw error;
@@ -44,7 +44,7 @@ serve(async (req) => {
       changefreq: "hourly",
     }));
 
-    // Generate XML
+    // Generate XML with image sitemap support
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
@@ -71,9 +71,12 @@ serve(async (req) => {
 `;
     }
 
-    // Add article pages
+    // Add article pages with images
     for (const article of articles || []) {
       const lastmod = article.updated_at || article.published_at;
+      const escapedTitle = escapeXml(article.title);
+      const escapedDescription = escapeXml(article.description?.substring(0, 200) || "");
+      
       xml += `  <url>
     <loc>${baseUrl}/article/${article.slug}</loc>
     <lastmod>${new Date(lastmod).toISOString()}</lastmod>
@@ -85,7 +88,39 @@ serve(async (req) => {
         <news:language>en</news:language>
       </news:publication>
       <news:publication_date>${new Date(article.published_at).toISOString()}</news:publication_date>
-    </news:news>
+      <news:title>${escapedTitle}</news:title>
+    </news:news>`;
+
+      // Add main image
+      if (article.image_url) {
+        const imageUrl = article.image_url.startsWith("http") 
+          ? article.image_url 
+          : `${baseUrl}${article.image_url}`;
+        xml += `
+    <image:image>
+      <image:loc>${escapeXml(imageUrl)}</image:loc>
+      <image:title>${escapedTitle}</image:title>
+      <image:caption>${escapedDescription}</image:caption>
+    </image:image>`;
+      }
+
+      // Add additional images from the images array
+      if (article.images && Array.isArray(article.images)) {
+        for (let i = 0; i < article.images.length; i++) {
+          const imgUrl = article.images[i];
+          if (imgUrl && imgUrl !== article.image_url) {
+            const fullImageUrl = imgUrl.startsWith("http") ? imgUrl : `${baseUrl}${imgUrl}`;
+            xml += `
+    <image:image>
+      <image:loc>${escapeXml(fullImageUrl)}</image:loc>
+      <image:title>${escapedTitle} - Image ${i + 2}</image:title>
+      <image:caption>${escapedDescription}</image:caption>
+    </image:image>`;
+          }
+        }
+      }
+
+      xml += `
   </url>
 `;
     }
@@ -96,7 +131,7 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=3600", // Cache for 1 hour
+        "Cache-Control": "public, max-age=1800", // Cache for 30 minutes
       },
     });
   } catch (error) {
@@ -107,3 +142,14 @@ serve(async (req) => {
     });
   }
 });
+
+// Helper function to escape XML special characters
+function escapeXml(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}

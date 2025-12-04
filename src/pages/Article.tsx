@@ -75,7 +75,7 @@ export const Article = () => {
   const { data: relatedArticles = [] } = useRelatedArticles(
     article?.category || "",
     article?.id || "",
-    3
+    6
   );
 
   // Increment view count once per page load
@@ -381,8 +381,15 @@ export const Article = () => {
         
         {/* Internal Links for SEO */}
         <InternalLinks 
-          articles={relatedArticles.map(a => ({ id: a.id, title: a.title, slug: a.slug, category: a.category }))} 
-          currentCategory={article.category} 
+          articles={relatedArticles.map(a => ({ 
+            id: a.id, 
+            title: a.title, 
+            slug: a.slug, 
+            category: a.category,
+            image_url: a.image_url || undefined 
+          }))} 
+          currentCategory={article.category}
+          maxLinks={6}
         />
       </main>
 
