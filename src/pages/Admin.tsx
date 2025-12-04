@@ -14,6 +14,7 @@ import { UserManagement } from "@/components/UserManagement";
 import { TickerManagement } from "@/components/TickerManagement";
 import { SubscriptionManagement } from "@/components/SubscriptionManagement";
 import { NotFoundManagement } from "@/components/NotFoundManagement";
+import { ArticleUpdatesManager } from "@/components/ArticleUpdatesManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { notifyIndexNow } from "@/hooks/useIndexNow";
 import { generateKeywords, generateMetaDescription, generateTags } from "@/utils/seo";
@@ -981,6 +982,14 @@ export const Admin = () => {
                   )}
                 </div>
               </form>
+              
+              {/* Article Updates Section - only show when editing */}
+              {editingId && (
+                <ArticleUpdatesManager 
+                  articleId={editingId} 
+                  articleSlug={formData.slug || generateSlug(formData.title)} 
+                />
+              )}
             </CardContent>
           </Card>
         )}

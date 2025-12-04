@@ -110,6 +110,44 @@ export type Database = {
           },
         ]
       }
+      article_updates: {
+        Row: {
+          article_id: string
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          images: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          images?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          images?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_updates_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       articles: {
         Row: {
           author: string
