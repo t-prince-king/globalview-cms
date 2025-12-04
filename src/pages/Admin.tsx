@@ -15,6 +15,8 @@ import { TickerManagement } from "@/components/TickerManagement";
 import { SubscriptionManagement } from "@/components/SubscriptionManagement";
 import { NotFoundManagement } from "@/components/NotFoundManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { notifyIndexNow } from "@/hooks/useIndexNow";
+import { generateKeywords, generateMetaDescription, generateTags } from "@/utils/seo";
 
 type ImageSettings = {
   width?: number;
@@ -306,6 +308,13 @@ export const Admin = () => {
 
         if (error) throw error;
         toast.success("Article updated!");
+        
+        // Notify search engines about the update
+        notifyIndexNow(slug).then(success => {
+          if (success) {
+            toast.success("Search engines notified of update");
+          }
+        });
       } else {
         const { error } = await supabase
           .from("articles")
@@ -313,6 +322,13 @@ export const Admin = () => {
 
         if (error) throw error;
         toast.success("Article published!");
+        
+        // Notify search engines about the new article
+        notifyIndexNow(slug).then(success => {
+          if (success) {
+            toast.success("Search engines notified for fast indexing");
+          }
+        });
       }
 
       resetForm();
