@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { addIndexNowLog } from "./useCEODashboard";
 
 /**
  * Hook for submitting URLs to IndexNow for fast search engine indexing
@@ -18,13 +19,16 @@ export const useIndexNow = () => {
 
       if (error) {
         console.error("IndexNow submission error:", error);
+        addIndexNowLog(articleUrl, false, error.message);
         return { success: false, error };
       }
 
       console.log("IndexNow submission result:", data);
+      addIndexNowLog(articleUrl, true, "Submitted successfully");
       return { success: true, data };
-    } catch (error) {
+    } catch (error: any) {
       console.error("IndexNow error:", error);
+      addIndexNowLog(`/article/${articleSlug}`, false, error.message);
       return { success: false, error };
     }
   };
@@ -43,12 +47,15 @@ export const useIndexNow = () => {
 
       if (error) {
         console.error("IndexNow batch submission error:", error);
+        addIndexNowLog(`Batch (${slugs.length} articles)`, false, error.message);
         return { success: false, error };
       }
 
+      addIndexNowLog(`Batch (${slugs.length} articles)`, true, "Submitted successfully");
       return { success: true, data };
-    } catch (error) {
+    } catch (error: any) {
       console.error("IndexNow batch error:", error);
+      addIndexNowLog(`Batch (${slugs.length} articles)`, false, error.message);
       return { success: false, error };
     }
   };
@@ -74,8 +81,11 @@ export const notifyIndexNow = async (articleSlug: string): Promise<boolean> => {
       },
     });
 
-    return !error;
-  } catch {
+    const success = !error;
+    addIndexNowLog(articleUrl, success, success ? "Submitted successfully" : error?.message || "Failed");
+    return success;
+  } catch (error: any) {
+    addIndexNowLog(`/article/${articleSlug}`, false, error.message);
     return false;
   }
 };
