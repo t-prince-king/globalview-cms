@@ -5,6 +5,8 @@ interface ArticleUpdate {
   id: string;
   content: string;
   images: string[];
+  title: string | null;
+  keywords: string[] | null;
   created_at: string;
 }
 
@@ -28,10 +30,19 @@ export const ArticleUpdates = memo(({ updates }: ArticleUpdatesProps) => {
             itemScope
             itemType="https://schema.org/CorrectionComment"
           >
-            <header className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-semibold text-primary">
-                Update #{index + 1}
-              </span>
+            <header className="flex flex-wrap items-center gap-2 mb-3">
+              {update.title ? (
+                <h3 
+                  className="text-base font-semibold text-primary"
+                  itemProp="name"
+                >
+                  {update.title}
+                </h3>
+              ) : (
+                <span className="text-sm font-semibold text-primary">
+                  Update #{index + 1}
+                </span>
+              )}
               <span className="text-xs text-muted-foreground">
                 — <time itemProp="datePublished" dateTime={update.created_at}>
                   {format(new Date(update.created_at), "MMMM d, yyyy")}
@@ -44,7 +55,24 @@ export const ArticleUpdates = memo(({ updates }: ArticleUpdatesProps) => {
                 <p key={pIndex} className="mb-2 text-foreground leading-relaxed">
                   {paragraph.split("\n").map((line, lIndex) => (
                     <span key={lIndex}>
-                      {line}
+                      {/* Parse links in content */}
+                      {line.split(/(\[.*?\]\(.*?\))/).map((part, partIndex) => {
+                        const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
+                        if (linkMatch) {
+                          return (
+                            <a
+                              key={partIndex}
+                              href={linkMatch[2]}
+                              className="text-primary hover:underline"
+                              target={linkMatch[2].startsWith('http') ? '_blank' : undefined}
+                              rel={linkMatch[2].startsWith('http') ? 'noopener noreferrer' : undefined}
+                            >
+                              {linkMatch[1]}
+                            </a>
+                          );
+                        }
+                        return part;
+                      })}
                       {lIndex < paragraph.split("\n").length - 1 && <br />}
                     </span>
                   ))}
@@ -58,14 +86,20 @@ export const ArticleUpdates = memo(({ updates }: ArticleUpdatesProps) => {
                   <figure key={imgIndex} className="m-0">
                     <img
                       src={imageUrl}
-                      alt={`Update ${index + 1} - Image ${imgIndex + 1}`}
+                      alt={update.title ? `${update.title} - Image ${imgIndex + 1}` : `Update ${index + 1} - Image ${imgIndex + 1}`}
                       className="max-w-full sm:max-w-[300px] rounded-lg shadow-sm cursor-pointer hover:opacity-90 transition-opacity"
                       loading="lazy"
                       onClick={() => window.open(imageUrl, '_blank')}
+                      itemProp="image"
                     />
                   </figure>
                 ))}
               </div>
+            )}
+
+            {/* Hidden keywords for SEO */}
+            {update.keywords && update.keywords.length > 0 && (
+              <meta itemProp="keywords" content={update.keywords.join(', ')} />
             )}
           </article>
         ))}

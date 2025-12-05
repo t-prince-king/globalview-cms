@@ -13,7 +13,8 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useArticle, useRelatedArticles } from "@/hooks/useArticles";
-import { useArticleUpdates } from "@/hooks/useArticleUpdates";
+import { useArticleUpdates, getLatestUpdateDate } from "@/hooks/useArticleUpdates";
+import { RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,9 @@ export const Article = () => {
 
   // Fetch article updates
   const { data: articleUpdates = [] } = useArticleUpdates(article?.id || "");
+
+  // Get last updated date from updates
+  const lastUpdateDate = getLatestUpdateDate(articleUpdates);
 
   // Increment view count once per page load
   useEffect(() => {
@@ -232,14 +236,25 @@ export const Article = () => {
               {article.title}
             </h1>
 
-            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground mb-8">
-              <span itemProp="author" itemScope itemType="https://schema.org/Person">
-                By <span itemProp="name">{article.author}</span>
-              </span>
-              <span>•</span>
-              <time itemProp="datePublished" dateTime={formatDateISO(article.published_at || new Date())}>
-                {format(new Date(article.published_at || new Date()), "MMMM d, yyyy")}
-              </time>
+            <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground mb-8">
+              <div className="flex items-center gap-4">
+                <span itemProp="author" itemScope itemType="https://schema.org/Person">
+                  By <span itemProp="name">{article.author}</span>
+                </span>
+                <span>•</span>
+                <time itemProp="datePublished" dateTime={formatDateISO(article.published_at || new Date())}>
+                  {format(new Date(article.published_at || new Date()), "MMMM d, yyyy")}
+                </time>
+              </div>
+              {lastUpdateDate && (
+                <div className="flex items-center gap-1 text-xs text-primary">
+                  <RefreshCw className="h-3 w-3" />
+                  <span>Last updated: </span>
+                  <time itemProp="dateModified" dateTime={lastUpdateDate}>
+                    {format(new Date(lastUpdateDate), "MMMM d, yyyy")}
+                  </time>
+                </div>
+              )}
             </div>
           </header>
 
