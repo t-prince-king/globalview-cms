@@ -118,6 +118,8 @@ export type Database = {
           created_by: string | null
           id: string
           images: string[] | null
+          keywords: string[] | null
+          title: string | null
           updated_at: string
         }
         Insert: {
@@ -127,6 +129,8 @@ export type Database = {
           created_by?: string | null
           id?: string
           images?: string[] | null
+          keywords?: string[] | null
+          title?: string | null
           updated_at?: string
         }
         Update: {
@@ -136,6 +140,8 @@ export type Database = {
           created_by?: string | null
           id?: string
           images?: string[] | null
+          keywords?: string[] | null
+          title?: string | null
           updated_at?: string
         }
         Relationships: [

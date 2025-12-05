@@ -987,7 +987,8 @@ export const Admin = () => {
               {editingId && (
                 <ArticleUpdatesManager 
                   articleId={editingId} 
-                  articleSlug={formData.slug || generateSlug(formData.title)} 
+                  articleSlug={formData.slug || generateSlug(formData.title)}
+                  articleCategory={formData.category}
                 />
               )}
             </CardContent>

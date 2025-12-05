@@ -6,6 +6,8 @@ interface ArticleUpdate {
   article_id: string;
   content: string;
   images: string[];
+  title: string | null;
+  keywords: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -27,4 +29,14 @@ export const useArticleUpdates = (articleId: string) => {
     gcTime: 30 * 60 * 1000,
     enabled: !!articleId,
   });
+};
+
+// Get the most recent update date for an article
+export const getLatestUpdateDate = (updates: ArticleUpdate[]): string | null => {
+  if (!updates || updates.length === 0) return null;
+  
+  const sorted = [...updates].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+  return sorted[0].created_at;
 };
