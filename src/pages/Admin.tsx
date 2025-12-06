@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LogOut, Plus, Edit, Trash2, Home, Upload, X, Image, Video, Type, MoveUp, MoveDown, Grid, Columns, BarChart3, Megaphone } from "lucide-react";
+import { LogOut, Plus, Edit, Trash2, Home, Upload, X, Image, Video, Type, MoveUp, MoveDown, Grid, Columns, BarChart3, Megaphone, Code } from "lucide-react";
 import { UserManagement } from "@/components/UserManagement";
 import { TickerManagement } from "@/components/TickerManagement";
 import { SubscriptionManagement } from "@/components/SubscriptionManagement";
@@ -27,7 +27,8 @@ type ImageSettings = {
 type ContentBlock = 
   | { type: "text"; content: string }
   | { type: "image"; urls: string[]; layout: "single" | "grid" | "row"; imageSettings?: { [key: string]: ImageSettings } }
-  | { type: "video"; urls: string[] };
+  | { type: "video"; urls: string[] }
+  | { type: "ad"; ad_code: string };
 
 interface Article {
   id: string;
@@ -420,13 +421,15 @@ export const Admin = () => {
     setVideoPreviews([]);
   };
 
-  const addBlock = (type: "text" | "image" | "video") => {
+  const addBlock = (type: "text" | "image" | "video" | "ad") => {
     if (type === "text") {
       setContentBlocks([...contentBlocks, { type: "text", content: "" }]);
     } else if (type === "image") {
       setContentBlocks([...contentBlocks, { type: "image", urls: [], layout: "single" }]);
-    } else {
+    } else if (type === "video") {
       setContentBlocks([...contentBlocks, { type: "video", urls: [] }]);
+    } else if (type === "ad") {
+      setContentBlocks([...contentBlocks, { type: "ad", ad_code: "" }]);
     }
   };
 
@@ -660,7 +663,7 @@ export const Admin = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label className="text-slate-300">Article Content Blocks</Label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button type="button" size="sm" onClick={() => addBlock("text")} variant="outline" className="border-slate-700 hover:bg-slate-800">
                         <Type className="h-4 w-4 mr-2" />
                         Add Text
@@ -673,6 +676,10 @@ export const Admin = () => {
                         <Video className="h-4 w-4 mr-2" />
                         Add Video
                       </Button>
+                      <Button type="button" size="sm" onClick={() => addBlock("ad")} variant="outline" className="border-amber-600 text-amber-400 hover:bg-amber-900/30">
+                        <Code className="h-4 w-4 mr-2" />
+                        Add Ad Block
+                      </Button>
                     </div>
                   </div>
 
@@ -684,7 +691,10 @@ export const Admin = () => {
                             {block.type === "text" && <Type className="h-4 w-4 text-slate-400" />}
                             {block.type === "image" && <Image className="h-4 w-4 text-slate-400" />}
                             {block.type === "video" && <Video className="h-4 w-4 text-slate-400" />}
-                            <span className="text-sm text-slate-400 capitalize">{block.type} Block {blockIndex + 1}</span>
+                            {block.type === "ad" && <Code className="h-4 w-4 text-amber-400" />}
+                            <span className={`text-sm capitalize ${block.type === "ad" ? "text-amber-400" : "text-slate-400"}`}>
+                              {block.type === "ad" ? "Ad" : block.type} Block {blockIndex + 1}
+                            </span>
                           </div>
                           <div className="flex gap-1">
                             <Button type="button" size="sm" variant="ghost" onClick={() => moveBlock(blockIndex, "up")} disabled={blockIndex === 0}>
@@ -895,6 +905,32 @@ export const Admin = () => {
                                     </Button>
                                   </div>
                                 ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {block.type === "ad" && (
+                          <div className="space-y-3">
+                            <div className="p-3 bg-amber-900/20 border border-amber-700/50 rounded-lg">
+                              <p className="text-xs text-amber-400 mb-2">
+                                ⚠️ Paste your AdSense, affiliate, or custom ad HTML/JS code below. This ad will only display when global ads are enabled.
+                              </p>
+                            </div>
+                            <Textarea
+                              placeholder="Paste your ad HTML code here (AdSense, banner ads, script tags, iframes, etc.)"
+                              value={block.ad_code}
+                              onChange={(e) => updateBlock(blockIndex, { ad_code: e.target.value })}
+                              rows={6}
+                              className="bg-slate-900 border-slate-700 text-slate-100 font-mono text-sm"
+                            />
+                            {block.ad_code && (
+                              <div className="space-y-2">
+                                <Label className="text-xs text-slate-400">Preview (scripts won't execute)</Label>
+                                <div 
+                                  className="p-4 bg-slate-900 rounded-lg border border-slate-700 overflow-auto max-h-32"
+                                  dangerouslySetInnerHTML={{ __html: block.ad_code.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '<div class="text-xs text-amber-400">[Script Hidden in Preview]</div>') }}
+                                />
                               </div>
                             )}
                           </div>

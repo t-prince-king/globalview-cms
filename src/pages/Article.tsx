@@ -10,6 +10,7 @@ import { ArticleUpdates } from "@/components/ArticleUpdates";
 import { SEOHead } from "@/components/SEOHead";
 import { ArticleStructuredData, BreadcrumbStructuredData } from "@/components/ArticleStructuredData";
 import { ArticleAds } from "@/components/ArticleAds";
+import { InlineAdBlock } from "@/components/InlineAdBlock";
 import { useParams } from "react-router-dom";
 import { useEffect, useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +34,8 @@ type ImageSettings = {
 type ContentBlock = 
   | { type: "text"; content: string }
   | { type: "image"; urls: string[]; layout: "single" | "grid" | "row"; imageSettings?: { [key: string]: ImageSettings } }
-  | { type: "video"; urls: string[] };
+  | { type: "video"; urls: string[] }
+  | { type: "ad"; ad_code: string };
 
 // Memoized article card
 const MemoizedArticleCard = memo(ArticleCard);
@@ -317,6 +319,12 @@ export const Article = () => {
                       {block.urls.map((url, vidIndex) => (
                         <VideoPlayer key={vidIndex} src={url} />
                       ))}
+                    </div>
+                  )}
+
+                  {block.type === "ad" && block.ad_code && (
+                    <div className="max-w-4xl mx-auto">
+                      <InlineAdBlock adCode={block.ad_code} />
                     </div>
                   )}
                   
