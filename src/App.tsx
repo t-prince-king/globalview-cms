@@ -15,6 +15,7 @@ const Contact = lazy(() => import("./pages/Contact").then(m => ({ default: m.Con
 const Auth = lazy(() => import("./pages/Auth").then(m => ({ default: m.Auth })));
 const Admin = lazy(() => import("./pages/Admin").then(m => ({ default: m.Admin })));
 const CEODashboard = lazy(() => import("./pages/CEODashboard").then(m => ({ default: m.CEODashboard })));
+const AdManager = lazy(() => import("./pages/AdManager").then(m => ({ default: m.AdManager })));
 const Bookmarks = lazy(() => import("./pages/Bookmarks").then(m => ({ default: m.Bookmarks })));
 const Profile = lazy(() => import("./pages/Profile").then(m => ({ default: m.Profile })));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -64,6 +65,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/dashboard" element={<CEODashboard />} />
+            <Route path="/admin/ads" element={<AdManager />} />
             <Route path="/bookmarks" element={<Bookmarks />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
