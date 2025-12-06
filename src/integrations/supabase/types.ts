@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_settings: {
+        Row: {
+          ads_enabled: boolean
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          ads_enabled?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          ads_enabled?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ads: {
+        Row: {
+          ad_code: string
+          created_at: string
+          description: string | null
+          id: string
+          placement_type: string
+          status: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ad_code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          placement_type?: string
+          status?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ad_code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          placement_type?: string
+          status?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       article_bookmarks: {
         Row: {
           article_id: string

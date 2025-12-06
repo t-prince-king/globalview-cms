@@ -9,6 +9,7 @@ import { InternalLinks } from "@/components/InternalLinks";
 import { ArticleUpdates } from "@/components/ArticleUpdates";
 import { SEOHead } from "@/components/SEOHead";
 import { ArticleStructuredData, BreadcrumbStructuredData } from "@/components/ArticleStructuredData";
+import { ArticleAds } from "@/components/ArticleAds";
 import { useParams } from "react-router-dom";
 import { useEffect, useState, memo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -258,20 +259,27 @@ export const Article = () => {
             </div>
           </header>
 
+          {/* Ad Slot - Top of Article */}
+          <ArticleAds position="top" />
+
           {/* Display content blocks if available */}
           {article.content_blocks && article.content_blocks.length > 0 ? (
             <div className="space-y-8 mb-12">
-              {article.content_blocks.map((block, index) => (
-                <div key={index}>
-                  {block.type === "text" && (
-                    <div className="prose prose-lg max-w-none mx-auto">
-                      {block.content.split("\n\n").map((paragraph, pIndex) => (
-                        <p key={pIndex} className="mb-4 leading-relaxed text-center">
-                          {paragraph}
-                        </p>
-                      ))}
-                    </div>
-                  )}
+              {article.content_blocks.map((block, index) => {
+                const totalBlocks = article.content_blocks?.length || 0;
+                const isMiddle = index === Math.floor(totalBlocks / 2) - 1;
+                
+                return (
+                  <div key={index}>
+                    {block.type === "text" && (
+                      <div className="prose prose-lg max-w-none mx-auto">
+                        {block.content.split("\n\n").map((paragraph, pIndex) => (
+                          <p key={pIndex} className="mb-4 leading-relaxed text-center">
+                            {paragraph}
+                          </p>
+                        ))}
+                      </div>
+                    )}
                   
                   {block.type === "image" && block.urls.length > 0 && (
                     <div className={`max-w-4xl mx-auto ${
@@ -311,8 +319,12 @@ export const Article = () => {
                       ))}
                     </div>
                   )}
+                  
+                  {/* Ad Slot - Middle of Article (after ~50% of content) */}
+                  {isMiddle && <ArticleAds position="middle" />}
                 </div>
-              ))}
+              );
+            })}
             </div>
           ) : (
             <>
@@ -380,6 +392,9 @@ export const Article = () => {
 
           {/* Likes and Comments */}
           <ArticleEngagement articleId={article.id} />
+
+          {/* Ad Slot - Bottom of Article */}
+          <ArticleAds position="bottom" />
 
           {/* Article Updates / Revisions */}
           <ArticleUpdates updates={articleUpdates} />

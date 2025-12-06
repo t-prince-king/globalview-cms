@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LogOut, Plus, Edit, Trash2, Home, Upload, X, Image, Video, Type, MoveUp, MoveDown, Grid, Columns, BarChart3 } from "lucide-react";
+import { LogOut, Plus, Edit, Trash2, Home, Upload, X, Image, Video, Type, MoveUp, MoveDown, Grid, Columns, BarChart3, Megaphone } from "lucide-react";
 import { UserManagement } from "@/components/UserManagement";
 import { TickerManagement } from "@/components/TickerManagement";
 import { SubscriptionManagement } from "@/components/SubscriptionManagement";
@@ -496,6 +496,10 @@ export const Admin = () => {
               <Button variant="default" size="sm" onClick={() => navigate("/admin/dashboard")} className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 CEO Dashboard
+              </Button>
+              <Button variant="default" size="sm" onClick={() => navigate("/admin/ads")} className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none">
+                <Megaphone className="h-4 w-4 mr-2" />
+                Ad Manager
               </Button>
               <span className="text-sm text-slate-400 hidden sm:inline">{user?.email}</span>
               <span className="text-xs text-slate-400 sm:hidden truncate max-w-[150px]">{user?.email}</span>
