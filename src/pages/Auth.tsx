@@ -21,18 +21,37 @@ export const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/admin");
-      }
-    });
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
         navigate("/admin");
       }
     });
+
+    const init = async () => {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+
+      // If user arrived from an email verification link, exchange the code for a session
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        url.searchParams.delete("code");
+        window.history.replaceState({}, document.title, url.toString());
+
+        if (error) {
+          toast.error(error.message || "Verification link is invalid or expired.");
+        } else {
+          toast.success("Email verified! You can now access the admin dashboard.");
+          navigate("/admin");
+          return;
+        }
+      }
+
+      // Otherwise, check if user is already logged in
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) navigate("/admin");
+    };
+
+    init();
 
     return () => subscription.unsubscribe();
   }, [navigate]);
@@ -46,7 +65,7 @@ export const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/admin`,
+          emailRedirectTo: `${window.location.origin}/auth`,
           data: {
             display_name: displayName,
           },
@@ -81,7 +100,7 @@ export const Auth = () => {
         type: 'signup',
         email: signupEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}/admin`,
+          emailRedirectTo: `${window.location.origin}/auth`,
         },
       });
 
